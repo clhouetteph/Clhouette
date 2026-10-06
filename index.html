@@ -133,6 +133,35 @@ footer{text-align:center;padding:30px;color:var(--muted);font-size:12px}
       <div class="size-row" id="sizeButtons"></div>
     </div>
 
+<!-- FIND MY FIT -->
+<div class="fit-finder">
+  <p class="eyebrow">OPTIONAL</p>
+  <h2 style="font-size:23px">📏 Find My Best Fit</h2>
+  <p>Enter your measurements to find dresses that may fit you best.</p>
+
+  <div class="fit-inputs">
+    <div>
+      <label>Bust (cm)</label>
+      <input id="fitBust" type="number" placeholder="e.g. 88">
+    </div>
+
+    <div>
+      <label>Waist (cm)</label>
+      <input id="fitWaist" type="number" placeholder="e.g. 70">
+    </div>
+
+    <div>
+      <label>Hips (cm)</label>
+      <input id="fitHips" type="number" placeholder="e.g. 96">
+    </div>
+  </div>
+
+  <button type="button" onclick="findMyFit()">Find My Fit →</button>
+  <button type="button" onclick="clearFit()">Clear</button>
+
+  <p id="fitMessage"></p>
+</div>
+    
     <div id="filterArea" style="display:none">
       <div class="controls">
         <div class="field">
@@ -261,6 +290,10 @@ const dresses = [
     name:"The Muse Dress",
     image:"the muse dress.jpg",
     size:["S","M"],
+    measurements:{
+  S:{bust:[80,86],waist:[62,68],hips:[88,94]},
+  M:{bust:[86,92],waist:[68,74],hips:[94,100]}
+},
     occasion:["Wedding","Dinner"],
     budget:300,
     style:"Elegant",
@@ -406,6 +439,82 @@ function renderSizes(){
   document.getElementById("sizeButtons").innerHTML=SIZES.map(s=>`
     <button class="size-btn" onclick="chooseSize('${s}',this)">${s}</button>`).join("");
 }
+function findMyFit(){
+  const bust = Number(document.getElementById("fitBust").value);
+  const waist = Number(document.getElementById("fitWaist").value);
+  const hips = Number(document.getElementById("fitHips").value);
+
+  const message = document.getElementById("fitMessage");
+
+  if(!bust || !waist || !hips){
+    message.textContent = "Please enter your bust, waist, and hip measurements.";
+    return;
+  }
+
+  const matches = [];
+
+  dresses.forEach(dress => {
+    if(!dress.measurements) return;
+
+    Object.entries(dress.measurements).forEach(([size, measurement]) => {
+
+      const bustMatch =
+        bust >= measurement.bust[0] &&
+        bust <= measurement.bust[1];
+
+      const waistMatch =
+        waist >= measurement.waist[0] &&
+        waist <= measurement.waist[1];
+
+      const hipsMatch =
+        hips >= measurement.hips[0] &&
+        hips <= measurement.hips[1];
+
+      const score =
+        Number(bustMatch) +
+        Number(waistMatch) +
+        Number(hipsMatch);
+
+      if(score >= 2){
+        matches.push({
+          name: dress.name,
+          size: size,
+          score: score
+        });
+      }
+    });
+  });
+
+  if(matches.length === 0){
+    message.innerHTML =
+      "<strong>No close dress matches found.</strong><br>" +
+      "Try another measurement or browse our regular sizes.";
+    return;
+  }
+
+  matches.sort((a,b) => b.score - a.score);
+
+  message.innerHTML =
+    "<strong>✨ Dresses Recommended For You</strong><br><br>" +
+
+    matches.map(match =>
+      `<div style="margin-bottom:16px">
+        <strong>${match.name}</strong><br>
+        Estimated size: ${match.size}<br>
+        <span>✓ Good match (${match.score}/3)</span>
+      </div>`
+    ).join("") +
+
+    "<small>Fit recommendations are estimates. Actual fit may vary depending on the dress cut, fabric, and personal preference.</small>";
+}
+
+
+function clearFit(){
+  document.getElementById("fitBust").value="";
+  document.getElementById("fitWaist").value="";
+  document.getElementById("fitHips").value="";
+  document.getElementById("fitMessage").textContent="";
+}  
 function populateFilters(){
   const budgetValues=[...new Set(dresses.map(d=>d.budget))].sort((a,b)=>a-b);
   document.getElementById("budget").innerHTML='<option value="">Any budget</option>'+budgetValues.map(v=>`<option value="${v}">Up to ₱${Number(v).toLocaleString()}</option>`).join("");
