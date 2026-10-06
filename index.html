@@ -234,12 +234,53 @@ footer{text-align:center;padding:30px;color:var(--muted);font-size:12px}
     <h2 id="selectedTitle">Reservation request</h2>
     <p class="note" id="selectedDetails"></p>
     <form id="reservationForm" onsubmit="submitInquiry(event)">
-      <div class="form-row"><label>Name</label><input id="customerName" required placeholder="Your name"></div>
-      <div class="form-row"><label>Email</label><input id="customerEmail" required type="email" placeholder="you@email.com"></div>
-      <div class="form-row"><label>Event date</label><input id="formDate" required type="date"></div>
-      <div class="form-row"><label>Message</label><textarea id="customerMessage" placeholder="Questions or special requests"></textarea></div>
-      <button class="submit" id="submitBtn">Send Reservation Request</button>
-    </form>
+  <div class="form-row">
+    <label>Name</label>
+    <input id="customerName" required placeholder="Your name">
+  </div>
+
+  <div class="form-row">
+    <label>Email</label>
+    <input id="customerEmail" required type="email" placeholder="you@email.com">
+  </div>
+
+  <div class="form-row">
+    <label>Rental start date</label>
+    <input id="formStartDate" required type="date" onchange="calculateRental()">
+  </div>
+
+  <div class="form-row">
+    <label>Rental end / return date</label>
+    <input id="formEndDate" required type="date" onchange="calculateRental()">
+  </div>
+
+  <div class="form-row">
+    <label>Delivery location</label>
+    <textarea id="deliveryLocation" required
+      placeholder="Where should we deliver the dress?"></textarea>
+  </div>
+
+  <div class="form-row">
+    <label>Return / pickup location</label>
+    <textarea id="returnLocation" required
+      placeholder="Where should the dress be returned or picked up?"></textarea>
+  </div>
+
+  <div id="rentalSummary" class="note" style="margin:12px 0;">
+    Select your rental dates to calculate the estimated rental cost.
+  </div>
+
+  <div class="form-row">
+    <label>Message</label>
+    <textarea id="customerMessage"
+      placeholder="Questions or special requests"></textarea>
+  </div>
+
+  <button class="submit" id="submitBtn">
+    Send Reservation Request
+  </button>
+
+</form>
     <p class="note">Payment is not processed on the website. This form sends the reservation request to the C-LHOUETTE Gmail inbox.</p>
   </div>
 </div>
@@ -602,39 +643,140 @@ function openModal(name){
   if(!selectedDress)return;
   document.getElementById("selectedTitle").textContent="Reserve / Inquire — "+selectedDress.name;
   document.getElementById("selectedDetails").textContent=`${selectedDress.style} • ${selectedDress.color || "Color not specified"} • ${selectedDress.occasion.join(" / ")} • ₱${selectedDress.budget.toLocaleString()} / event • Size ${selectedSize}`;
-  document.getElementById("formDate").value=document.getElementById("date").value || "";
+  document.getElementById("formStartDate").value="";
   document.getElementById("modal").classList.add("open");
 }
 function closeModal(){document.getElementById("modal").classList.remove("open")}
 async function submitInquiry(e){
   e.preventDefault();
-  if(!selectedDress)return;
-  const btn=document.getElementById("submitBtn");
-  btn.disabled=true;
-  btn.textContent="Sending...";
-  const params=new URLSearchParams({
-    customerName:document.getElementById("customerName").value,
-    customerEmail:document.getElementById("customerEmail").value,
-    dressName:selectedDress.name,
-    size:selectedSize,
-    occasion:selectedOccasion,
-    budget:"₱"+selectedDress.budget,
-    style:selectedDress.style,
-    eventDate:document.getElementById("formDate").value,
-    message:document.getElementById("customerMessage").value
+
+  if(!selectedDress) return;
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+
+  const startDate = document.getElementById("formStartDate").value;
+  const endDate = document.getElementById("formEndDate").value;
+  const deliveryLocation = document.getElementById("deliveryLocation").value;
+  const returnLocation = document.getElementById("returnLocation").value;
+
+  // Calculate rental days
+  const start = new Date(startDate + "T00:00:00");
+  const end = new Date(endDate + "T00:00:00");
+  const difference = end - start;
+  const rentalDays = Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
+
+  // Make sure the dates are valid
+  if(rentalDays <= 0){
+    alert("Please select a valid rental start and return date.");
+    btn.disabled = false;
+    btn.textContent = "Send Reservation Request";
+    return;
+  }
+
+  // Daily rental price of the selected dress
+  const dailyRate = Number(selectedDress.budget);
+
+  // Calculate estimated total
+  const estimatedTotal = dailyRate * rentalDays;
+
+  // Show the calculation
+  document.getElementById("rentalSummary").innerHTML =
+    "<strong>Rental summary</strong><br>" +
+    rentalDays + " day" + (rentalDays === 1 ? "" : "s") +
+    " × ₱" + dailyRate.toLocaleString() +
+    "/day = <strong>₱" + estimatedTotal.toLocaleString() + "</strong>";
+
+  const params = new URLSearchParams({
+    customerName: document.getElementById("customerName").value,
+    customerEmail: document.getElementById("customerEmail").value,
+
+    dressName: selectedDress.name,
+    size: selectedSize,
+    occasion: selectedOccasion,
+
+    budget: "₱" + dailyRate.toLocaleString() + " / day",
+    style: selectedDress.style,
+
+    rentalStartDate: startDate,
+    rentalEndDate: endDate,
+    rentalDays: rentalDays,
+    dailyRate: dailyRate,
+    estimatedTotal: estimatedTotal,
+
+    deliveryLocation: deliveryLocation,
+    returnLocation: returnLocation,
+
+    message: document.getElementById("customerMessage").value
   });
+
   try{
-    await fetch(RESERVATION_URL,{method:"POST",mode:"no-cors",body:params});
+    await fetch(RESERVATION_URL,{
+      method:"POST",
+      mode:"no-cors",
+      body:params
+    });
+
     alert("Reservation request sent! Please wait for C-LHOUETTE to confirm your request.");
+
     document.getElementById("reservationForm").reset();
+    document.getElementById("rentalSummary").textContent =
+      "Select your rental dates to calculate the estimated rental cost.";
+
     closeModal();
+
   }catch(err){
     alert("The request could not be sent. Please try again.");
+
   }finally{
-    btn.disabled=false;
-    btn.textContent="Send Reservation Request";
+    btn.disabled = false;
+    btn.textContent = "Send Reservation Request";
   }
 }
+function calculateRental(){
+  if(!selectedDress) return;
+
+  const startDate = document.getElementById("formStartDate").value;
+  const endDate = document.getElementById("formEndDate").value;
+  const summary = document.getElementById("rentalSummary");
+
+  if(!startDate || !endDate){
+    summary.textContent =
+      "Select your rental dates to calculate the estimated rental cost.";
+    return;
+  }
+
+  const start = new Date(startDate + "T00:00:00");
+  const end = new Date(endDate + "T00:00:00");
+
+  const difference = end - start;
+  const rentalDays =
+    Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
+
+  if(rentalDays <= 0){
+    summary.innerHTML =
+      "<strong>Please select a valid return date.</strong>";
+    return;
+  }
+
+  const dailyRate = Number(selectedDress.budget);
+  const estimatedTotal = dailyRate * rentalDays;
+
+  summary.innerHTML =
+    "<strong>Rental summary</strong><br>" +
+    "Rental period: " +
+    rentalDays +
+    " day" +
+    (rentalDays === 1 ? "" : "s") +
+    "<br>" +
+    "Daily rate: ₱" +
+    dailyRate.toLocaleString() +
+    "<br>" +
+    "<strong>Estimated total: ₱" +
+    estimatedTotal.toLocaleString() +
+    "</strong>";
+}  
 window.addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal()});
 
 /* =========================================================
