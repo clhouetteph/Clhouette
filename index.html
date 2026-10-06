@@ -478,7 +478,7 @@ function render(){
       <div class="info">
         <div class="name">${d.name}</div>
         <div class="meta">${d.style} • ${d.occasion.join(" / ")}<br>Color: ${d.color || "Not specified"}<br>Available in: ${d.size.join(", ")} • ${d.availability==="available"?"Available":"Coming soon"}</div>
-        <div class="price">₱${d.budget.toLocaleString()} / event</div>
+        <div class="price">₱${d.budget.toLocaleString()} / day</div>
         <button class="reserve" onclick='openModal(${JSON.stringify(d.name)})'>Reserve / Inquire</button>
       </div>
     </article>`).join("") :
