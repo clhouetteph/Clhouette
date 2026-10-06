@@ -518,38 +518,84 @@ function findMyFit(){
 
       if(score >= 2){
         matches.push({
-          name: dress.name,
-          size: size,
-          score: score
-        });
+  dress: dress,
+  name: dress.name,
+  size: size,
+  score: score
+});
       }
     });
   });
 
-  if(matches.length === 0){
-    message.innerHTML =
-      "<strong>No close dress matches found.</strong><br>" +
-      "Try another measurement or browse our regular sizes.";
-    return;
-  }
-
-  matches.sort((a,b) => b.score - a.score);
-
+ if(matches.length === 0){
   message.innerHTML =
-    "<strong>✨ Dresses Recommended For You</strong><br><br>" +
-
-    matches.map(match =>
-      `<div style="margin-bottom:16px">
-        <strong>${match.name}</strong><br>
-        Estimated size: ${match.size}<br>
-        <span>✓ Good match (${match.score}/3)</span>
-      </div>`
-    ).join("") +
-
-    "<small>Fit recommendations are estimates. Actual fit may vary depending on the dress cut, fabric, and personal preference.</small>";
+    "<strong>No close dress matches found.</strong><br>" +
+    "Try another measurement or browse our regular sizes.";
+  return;
 }
 
+matches.sort((a,b) => b.score - a.score);
 
+message.innerHTML =
+  "<strong>✨ Dresses Recommended For You</strong><br><br>" +
+
+  matches.map(match => `
+    <div style="
+      margin-bottom:24px;
+      border:1px solid #ddd;
+      border-radius:14px;
+      overflow:hidden;
+      max-width:320px;
+      background:#fff;
+    ">
+
+      <img
+        src="${match.dress.image}"
+        alt="${match.dress.name}"
+        style="
+          width:100%;
+          display:block;
+          object-fit:cover;
+        "
+      >
+
+      <div style="padding:16px;">
+
+        <strong style="font-size:20px;">
+          ${match.dress.name}
+        </strong>
+
+        <div style="margin-top:6px;">
+          ${match.dress.style || ""}
+          ${match.dress.occasion ? " • " + match.dress.occasion.join(" / ") : ""}
+        </div>
+
+        <div>
+          Color: ${match.dress.color || "Color not specified"}
+        </div>
+
+        <div>
+          Available in: ${match.dress.size ? match.dress.size.join(", ") : ""}
+        </div>
+
+        <div style="margin-top:10px;font-weight:bold;">
+          ₱${Number(match.dress.budget).toLocaleString()} / day
+        </div>
+
+        <div style="margin-top:10px;">
+          Estimated size: <strong>${match.size}</strong>
+        </div>
+
+        <div>
+          ✓ Good match (${match.score}/3)
+        </div>
+
+      </div>
+    </div>
+  `).join("") +
+
+  "<small>Fit recommendations are estimates. Actual fit may vary depending on the dress cut, fabric, and personal preference.</small>";
+}
 function clearFit(){
   document.getElementById("fitBust").value="";
   document.getElementById("fitWaist").value="";
