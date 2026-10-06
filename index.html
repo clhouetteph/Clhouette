@@ -589,7 +589,23 @@ message.innerHTML =
         <div>
           ✓ Good match (${match.score}/3)
         </div>
-
+<button
+  type="button"
+  onclick="selectedSize='${match.size}'; openModal('${match.dress.name}')"
+  style="
+    margin-top:14px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#111;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+  "
+>
+  Reserve / Inquire
+</button>
       </div>
     </div>
   `).join("") +
