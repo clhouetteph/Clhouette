@@ -507,6 +507,7 @@ let selectedDress = null;
 let liveOccasions = OCCASIONS;
 let selectedOccasion = "";
 let selectedSize = "";
+let fitMatches = null;
 
 function init(){
   renderOccasions();
@@ -551,139 +552,79 @@ function findMyFit(){
   const bust = Number(document.getElementById("fitBust").value);
   const waist = Number(document.getElementById("fitWaist").value);
   const hips = Number(document.getElementById("fitHips").value);
-
   const message = document.getElementById("fitMessage");
 
-  if(!bust || !waist || !hips){
-    message.textContent = "Please enter your bust, waist, and hip measurements.";
+  if(bust <= 0 || waist <= 0 || hips <= 0){
+    message.textContent = "Please enter valid bust, waist, and hip measurements.";
     return;
   }
 
-  const matches = [];
+  const results = new Map();
 
   dresses.forEach(dress => {
     if(!dress.measurements) return;
 
-    Object.entries(dress.measurements).forEach(([size, measurement]) => {
+    let measurements = dress.measurements;
 
-      const bustMatch =
-        bust >= measurement.bust[0] &&
-        bust <= measurement.bust[1];
+    if(typeof measurements === "string"){
+      try {
+        measurements = JSON.parse(measurements);
+      } catch(error){
+        return;
+      }
+    }
 
-      const waistMatch =
-        waist >= measurement.waist[0] &&
-        waist <= measurement.waist[1];
-
-      const hipsMatch =
-        hips >= measurement.hips[0] &&
-        hips <= measurement.hips[1];
+    Object.entries(measurements).forEach(([size, ranges]) => {
+      if(!ranges.bust || !ranges.waist || !ranges.hips) return;
 
       const score =
-        Number(bustMatch) +
-        Number(waistMatch) +
-        Number(hipsMatch);
+        Number(bust >= ranges.bust[0] && bust <= ranges.bust[1]) +
+        Number(waist >= ranges.waist[0] && waist <= ranges.waist[1]) +
+        Number(hips >= ranges.hips[0] && hips <= ranges.hips[1]);
 
-      if(score >= 2){
-        matches.push({
-  dress: dress,
-  name: dress.name,
-  size: size,
-  score: score
-});
-      }
+      if(score < 2) return;
+      if(!dress.size.includes(size)) return;
+
+      const existing = results.get(dress.name) || [];
+
+      existing.push({ size, score });
+      results.set(dress.name, existing);
     });
   });
 
- if(matches.length === 0){
-  message.innerHTML =
-    "<strong>No close dress matches found.</strong><br>" +
-    "Try another measurement or browse our regular sizes.";
-  return;
-}
+  fitMatches = results;
 
-matches.sort((a,b) => b.score - a.score);
+  if(!selectedOccasion){
+    message.textContent =
+      "Measurements checked! Choose your occasion to see your matching dresses in the catalog.";
+    return;
+  }
 
-message.innerHTML =
-  "<strong>✨ Dresses Recommended For You</strong><br><br>" +
+  document.getElementById("filterArea").style.display = "block";
+  render();
 
-  matches.map(match => `
-    <div style="
-      margin-bottom:24px;
-      border:1px solid #ddd;
-      border-radius:14px;
-      overflow:hidden;
-      max-width:320px;
-      background:#fff;
-    ">
+  const count = dresses.filter(matches).length;
 
-      <img
-        src="${match.dress.image}"
-        alt="${match.dress.name}"
-        style="
-          width:100%;
-          display:block;
-          object-fit:cover;
-        "
-      >
+  message.textContent = count
+    ? `${count} dress(es) match your measurements and current shopping preferences. See your catalog below. A 2/3 match is only a close fit estimate.`
+    : "No dresses match all your current filters and measurements. Try another size, occasion, or measurement.";
 
-      <div style="padding:16px;">
-
-        <strong style="font-size:20px;">
-          ${match.dress.name}
-        </strong>
-
-        <div style="margin-top:6px;">
-          ${match.dress.style || ""}
-          ${match.dress.occasion ? " • " + match.dress.occasion.join(" / ") : ""}
-        </div>
-
-        <div>
-          Color: ${match.dress.color || "Color not specified"}
-        </div>
-
-        <div>
-          Available in: ${match.dress.size ? match.dress.size.join(", ") : ""}
-        </div>
-
-        <div style="margin-top:10px;font-weight:bold;">
-          ₱${Number(match.dress.budget).toLocaleString()} / day
-        </div>
-
-        <div style="margin-top:10px;">
-          Estimated size: <strong>${match.size}</strong>
-        </div>
-
-        <div>
-          ✓ Good match (${match.score}/3)
-        </div>
-<button
-  type="button"
-  onclick="selectedSize='${match.size}'; openModal('${match.dress.name}')"
-  style="
-    margin-top:14px;
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    background:#111;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-  "
->
-  Reserve / Inquire
-</button>
-      </div>
-    </div>
-  `).join("") +
-
-  "<small>Fit recommendations are estimates. Actual fit may vary depending on the dress cut, fabric, and personal preference.</small>";
+  document.getElementById("filterArea").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 function clearFit(){
-  document.getElementById("fitBust").value="";
-  document.getElementById("fitWaist").value="";
-  document.getElementById("fitHips").value="";
-  document.getElementById("fitMessage").textContent="";
+  document.getElementById("fitBust").value = "";
+  document.getElementById("fitWaist").value = "";
+  document.getElementById("fitHips").value = "";
+  document.getElementById("fitMessage").textContent = "";
+
+  fitMatches = null;
+
+  if(selectedOccasion){
+    render();
+  }
 }  
 function populateFilters(){
   const budgetValues=[...new Set(dresses.map(d=>d.budget))].sort((a,b)=>a-b);
@@ -695,6 +636,12 @@ function chooseOccasion(o,btn){
   selectedOccasion=o;
   document.querySelectorAll(".occasion-btn").forEach(x=>x.classList.remove("active"));
   btn.classList.add("active");
+  if(fitMatches !== null){
+  document.getElementById("sizeArea").style.display = "block";
+  document.getElementById("filterArea").style.display = "block";
+  render();
+  return;
+}
   document.getElementById("sizeArea").style.display="block";
   document.getElementById("filterArea").style.display="none";
   document.querySelector(".size-row").scrollIntoView({behavior:"smooth",block:"center"});
@@ -710,6 +657,11 @@ function chooseSize(s,btn){
 function resetFilters(){
   selectedOccasion="";
   selectedSize="";
+  fitMatches = null;
+document.getElementById("fitBust").value = "";
+document.getElementById("fitWaist").value = "";
+document.getElementById("fitHips").value = "";
+document.getElementById("fitMessage").textContent = "";
   document.getElementById("filterArea").style.display="none";
   document.getElementById("sizeArea").style.display="none";
   document.querySelectorAll(".occasion-btn,.size-btn").forEach(x=>x.classList.remove("active"));
@@ -720,8 +672,17 @@ function resetFilters(){
   window.scrollTo({top:document.querySelector(".panel").offsetTop-80,behavior:"smooth"});
 }
 function matches(d){
+    if(fitMatches !== null){
+    const fittedSizes = fitMatches.get(d.name);
+
+    if(!fittedSizes || !fittedSizes.some(match =>
+      !selectedSize || match.size === selectedSize
+    )){
+      return false;
+    }
+  }
   if(!selectedOccasion || !d.occasion.includes(selectedOccasion)) return false;
-  if(!selectedSize || !d.size.includes(selectedSize)) return false;
+  if(selectedSize && !d.size.includes(selectedSize)) return false;
   const b=document.getElementById("budget").value;
   const st=document.getElementById("style").value;
   const date=document.getElementById("date").value;
@@ -729,16 +690,15 @@ function matches(d){
   if(b && d.budget>Number(b)) return false;
   if(st && d.style!==st) return false;
   if(a && d.availability!==a) return false;
-  if(date){
-    const day=new Date(date+"T00:00:00").getDate();
-    if(!d.days.includes(day)) return false;
-  }
+
   return true;
 }
 function render(){
   const list=dresses.filter(matches);
   const cat=document.getElementById("catalog");
-  let summary=`Showing ${selectedOccasion} dresses available in size ${selectedSize}`;
+  let summary = `Showing ${selectedOccasion} dresses`;
+if(selectedSize) summary += ` in size ${selectedSize}`;
+if(fitMatches !== null) summary += " matching your measurements";
   const b=document.getElementById("budget").value;
   const st=document.getElementById("style").value;
   const date=document.getElementById("date").value;
@@ -757,6 +717,15 @@ function render(){
       <div class="info">
         <div class="name">${d.name}</div>
         <div class="meta">${d.style} • ${d.occasion.join(" / ")}<br>Color: ${d.color || "Not specified"}<br>Available in: ${d.size.join(", ")} • ${d.availability==="available"?"Available":"Coming soon"}</div>
+        ${fitMatches !== null ? `
+  <div class="meta">
+    Estimated fit: ${fitMatches.get(d.name)
+      .filter(m => !selectedSize || m.size === selectedSize)
+      .map(m => `${m.size} (${m.score}/3)`)
+      .join(", ")}
+    <br>Fit estimates are not guaranteed.
+  </div>
+` : ""}
         <div class="price">₱${d.budget.toLocaleString()} / day</div>
         <button class="reserve" onclick='openModal(${JSON.stringify(d.name)})'>Reserve / Inquire</button>
       </div>
