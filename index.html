@@ -293,12 +293,12 @@ rgba(250,247,244,0.85) 95%
 
   <div class="form-row">
     <label>Rental start date</label>
-    <input id="formStartDate" required type="date" onchange="calculateRental()">
+   <input id="formStartDate" required type="date">
   </div>
 
   <div class="form-row">
     <label>Rental end / return date</label>
-    <input id="formEndDate" required type="date" onchange="calculateRental()">
+    <input id="formEndDate" required type="date">
   </div>
 
   <div class="form-row">
@@ -904,6 +904,72 @@ try {
     btn.textContent = "Send Reservation Request";
   }
 }
+  let availabilityCheckNumber = 0;
+
+async function showRentalAvailability() {
+  const summary = document.getElementById("rentalSummary");
+  const startDate = document.getElementById("formStartDate").value;
+  const endDate = document.getElementById("formEndDate").value;
+  const checkNumber = ++availabilityCheckNumber;
+
+  if (!selectedDress || !startDate || !endDate || endDate < startDate) {
+    return;
+  }
+
+  const dressName = selectedDress.name;
+
+  summary.insertAdjacentHTML(
+    "beforeend",
+    '<p id="availabilityMessage">Checking dress availability...</p>'
+  );
+
+  try {
+    const result = await checkSelectedDressAvailability(startDate, endDate);
+
+    if (
+      checkNumber !== availabilityCheckNumber ||
+      !selectedDress ||
+      selectedDress.name !== dressName
+    ) return;
+
+    const message = document.getElementById("availabilityMessage");
+    if (!message) return;
+
+    if (result.availableForRequestedDates) {
+      message.textContent = "✓ Available for your selected dates!";
+      message.style.color = "#477451";
+    } else {
+      message.textContent =
+        "✕ Unavailable for these dates." +
+        (result.nextAvailableStart && result.nextAvailableEnd
+          ? " Next available: " +
+            result.nextAvailableStart + " to " + result.nextAvailableEnd
+          : "");
+
+      message.style.color = "#a04444";
+    }
+  } catch (error) {
+    if (checkNumber !== availabilityCheckNumber) return;
+
+    const message = document.getElementById("availabilityMessage");
+    if (message) {
+      message.textContent =
+        "Availability couldn't be checked. Please try again.";
+      message.style.color = "#a04444";
+    }
+  }
+}
+  document.getElementById("formStartDate").addEventListener("change", function() {
+  availabilityCheckNumber++;
+  calculateRental();
+  showRentalAvailability();
+});
+
+document.getElementById("formEndDate").addEventListener("change", function() {
+  availabilityCheckNumber++;
+  calculateRental();
+  showRentalAvailability();
+});
 function calculateRental(){
   if(!selectedDress) return;
 
