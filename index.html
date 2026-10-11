@@ -24,7 +24,25 @@ a{color:inherit}
 header{padding:22px 5%;display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
 .logo{font-weight:900;letter-spacing:.14em;font-size:22px}
 .tag{font-size:13px;color:var(--muted)}
-.hero{padding:72px 5% 52px;max-width:1180px;margin:auto}
+.hero{
+  padding:100px 5% 100px;
+  max-width:100%;
+  min-height:580px;
+  margin:auto;
+
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(250,247,244,0.92) 0%,
+      rgba(250,247,244,0.65) 45%,
+      rgba(250,247,244,0.10) 100%
+    ),
+    url("hero.png");
+
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
 .eyebrow{font-size:11px;font-weight:900;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}
 .hero h1{font-size:clamp(42px,7vw,78px);line-height:.95;max-width:850px;margin:10px 0 18px;letter-spacing:-.05em}
 .hero p{max-width:650px;color:var(--muted);font-size:17px;line-height:1.6}
