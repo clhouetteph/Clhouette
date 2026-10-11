@@ -736,7 +736,52 @@ if(fitMatches !== null) summary += " matching your measurements";
 /* =========================================================
    RESERVATION MODAL
    ========================================================= */
-function openModal(name){
+async function checkSelectedDressAvailability(startDate, endDate) {
+  if (!selectedDress) {
+    throw new Error("Please select a dress.");
+  }
+
+  const response = await fetch(BACKEND_URL);
+  if (!response.ok) {
+    throw new Error("Could not load dress information.");
+  }
+
+  const inventory = await response.json();
+
+  if (!inventory.success || !Array.isArray(inventory.dresses)) {
+    throw new Error("Dress information is temporarily unavailable.");
+  }
+
+  const matchingDress = inventory.dresses.find(function(dress) {
+    return dress.name === selectedDress.name;
+  });
+
+  if (!matchingDress || !matchingDress.dressId) {
+    throw new Error("Availability is not yet set up for this dress.");
+  }
+
+  const url = new URL(BACKEND_URL);
+
+  url.searchParams.set("action", "availability");
+  url.searchParams.set("dressId", matchingDress.dressId);
+  url.searchParams.set("start", startDate);
+  url.searchParams.set("end", endDate);
+
+  const availabilityResponse = await fetch(url.toString());
+
+  if (!availabilityResponse.ok) {
+    throw new Error("Could not check rental availability.");
+  }
+
+  const data = await availabilityResponse.json();
+
+  if (!data.success || !data.availability) {
+    throw new Error(data.error || "Availability check failed.");
+  }
+
+  return data.availability;
+}
+  function openModal(name){
   selectedDress=dresses.find(d=>d.name===name);
   if(!selectedDress)return;
   document.getElementById("selectedTitle").textContent="Reserve / Inquire — "+selectedDress.name;
@@ -809,8 +854,35 @@ async function submitInquiry(e){
     message: document.getElementById("customerMessage").value
   });
 
-  try{
-    await fetch(RESERVATION_URL,{
+try {
+  btn.textContent = "Checking availability...";
+
+  const availability = await checkSelectedDressAvailability(
+    startDate,
+    endDate
+  );
+
+  if (!availability.availableForRequestedDates) {
+    let message = selectedDress.name +
+      " is unavailable for your selected rental dates.";
+
+    if (
+      availability.nextAvailableStart &&
+      availability.nextAvailableEnd
+    ) {
+      message += "\n\nNext available dates: " +
+        availability.nextAvailableStart +
+        " to " +
+        availability.nextAvailableEnd;
+    }
+
+    alert(message);
+    return;
+  }
+
+  btn.textContent = "Sending...";
+
+  await fetch(RESERVATION_URL,{
       method:"POST",
       mode:"no-cors",
       body:params
