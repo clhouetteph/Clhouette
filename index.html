@@ -503,11 +503,14 @@ const dresses = [
 const RESERVATION_URL = "https://script.google.com/macros/s/AKfycbzE3i3KJI9BneKa1tklbuKULHbtxJoQrg2c5NffoIzw0wKDnWvDn9_iVuabGwx9FL56/exec";
 
 let selectedDress = null;
+  const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzcDeU2xzI3OoEpEPlb5Q45TM9t8a_bRO-0rmoAGkkSMb-MfWncAs3p2hybb0biq8VM/exec";
+let liveOccasions = OCCASIONS;
 let selectedOccasion = "";
 let selectedSize = "";
 
 function init(){
   renderOccasions();
+  loadLiveOccasions();
   renderSizes();
   populateFilters();
   document.getElementById("budget").onchange=render;
@@ -515,8 +518,25 @@ function init(){
   document.getElementById("date").onchange=render;
   document.getElementById("availability").onchange=render;
 }
+  async function loadLiveOccasions() {
+  try {
+    const response = await fetch(BACKEND_URL);
+    if (!response.ok) throw new Error("Could not load occasions");
+
+    const data = await response.json();
+
+    if (!data.success || !Array.isArray(data.occasions)) {
+      throw new Error("Invalid occasions response");
+    }
+
+    liveOccasions = data.occasions;
+    renderOccasions();
+  } catch (error) {
+    console.warn("Using default occasions:", error);
+  }
+}
 function renderOccasions(){
-  document.getElementById("occasionButtons").innerHTML=OCCASIONS.map(o=>`
+ document.getElementById("occasionButtons").innerHTML=liveOccasions.map(o=>`
     <button class="occasion-btn" onclick="chooseOccasion('${o.name.replace(/'/g,"\\'")}',this)">
       <div class="occasion-icon">${o.icon}</div>
       <strong>${o.name}</strong>
