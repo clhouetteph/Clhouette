@@ -219,16 +219,7 @@ rgba(250,247,244,0.85) 95%
           <label>Style</label>
           <select id="style"><option value="">Any style</option></select>
         </div>
-        <div class="field">
-          <label>Event date</label>
-          <input id="date" type="date">
-        </div>
-        <div class="field">
-          <label>Availability</label>
-          <select id="availability"><option value="">Any status</option></select>
-        </div>
-      </div>
-
+     
       <section class="results">
         <div class="results-head">
           <div>
@@ -516,8 +507,6 @@ function init(){
   populateFilters();
   document.getElementById("budget").onchange=render;
   document.getElementById("style").onchange=render;
-  document.getElementById("date").onchange=render;
-  document.getElementById("availability").onchange=render;
 }
   async function loadLiveOccasions() {
   try {
@@ -630,7 +619,6 @@ function populateFilters(){
   const budgetValues=[...new Set(dresses.map(d=>d.budget))].sort((a,b)=>a-b);
   document.getElementById("budget").innerHTML='<option value="">Any budget</option>'+budgetValues.map(v=>`<option value="${v}">Up to ₱${Number(v).toLocaleString()}</option>`).join("");
   document.getElementById("style").innerHTML='<option value="">Any style</option>'+STYLES.map(s=>`<option>${s}</option>`).join("");
-  document.getElementById("availability").innerHTML='<option value="">Any status</option>'+AVAILABILITIES.map(a=>`<option value="${a}">${a==="available"?"Available now":"Coming soon"}</option>`).join("");
 }
 function chooseOccasion(o,btn){
   selectedOccasion=o;
@@ -667,8 +655,6 @@ document.getElementById("fitMessage").textContent = "";
   document.querySelectorAll(".occasion-btn,.size-btn").forEach(x=>x.classList.remove("active"));
   document.getElementById("budget").value="";
   document.getElementById("style").value="";
-  document.getElementById("date").value="";
-  document.getElementById("availability").value="";
   window.scrollTo({top:document.querySelector(".panel").offsetTop-80,behavior:"smooth"});
 }
 function matches(d){
@@ -685,11 +671,9 @@ function matches(d){
   if(selectedSize && !d.size.includes(selectedSize)) return false;
   const b=document.getElementById("budget").value;
   const st=document.getElementById("style").value;
-  const date=document.getElementById("date").value;
-  const a=document.getElementById("availability").value;
   if(b && d.budget>Number(b)) return false;
   if(st && d.style!==st) return false;
-  if(a && d.availability!==a) return false;
+
 
   return true;
 }
@@ -701,12 +685,8 @@ if(selectedSize) summary += ` in size ${selectedSize}`;
 if(fitMatches !== null) summary += " matching your measurements";
   const b=document.getElementById("budget").value;
   const st=document.getElementById("style").value;
-  const date=document.getElementById("date").value;
-  const a=document.getElementById("availability").value;
   if(b) summary+=`, up to ₱${Number(b).toLocaleString()}`;
   if(st) summary+=`, ${st.toLowerCase()} style`;
-  if(date) summary+=`, for your selected event date`;
-  if(a) summary+=`, ${a==="available"?"available now":"coming soon"}`;
   document.getElementById("selectionText").textContent=summary+".";
   cat.innerHTML=list.length ? list.map(d=>`
     <article class="card">
