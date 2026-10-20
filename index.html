@@ -80,7 +80,10 @@ header{padding:22px 5%;display:flex;justify-content:space-between;align-items:ce
 .reset{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 15px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .card{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 8px 25px rgba(30,20,25,.05)}
-.photo{height:350px;background:#eee7e7;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.photo{height:350px;background:#eee7e7;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.availability-badge{position:absolute;top:12px;right:12px;z-index:2;padding:8px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em;box-shadow:0 3px 12px rgba(30,20,25,.12)}
+.availability-badge.available{background:#e6f2e8;color:#285b38;border:1px solid #c6e1cc}
+.availability-badge.soon{background:#f7e5ec;color:#804a61;border:1px solid #e8c6d5}
 .photo img{width:100%;height:100%;object-fit:contain;display:block}
 .dress-shape{width:120px;height:250px;position:relative;opacity:.28}
 .dress-top{width:58px;height:85px;background:#555;border-radius:35px 35px 18px 18px;margin:auto}
@@ -1211,6 +1214,7 @@ if(fitMatches !== null) summary += " matching your measurements";
   cat.innerHTML=list.length ? list.map(d=>`
     <article class="card">
       <div class="photo">
+        <span class="availability-badge ${d.availability === "available" ? "available" : "soon"}" title="Date-specific bookings and blocked dates appear in the rental calendar">${d.availability === "available" ? "Available · Check dates" : "Coming Soon"}</span>
         ${d.image ? `<img src="${d.image}" alt="${d.name}">` :
         `<div class="dress-shape"><div class="dress-top"></div><div class="dress-skirt"></div></div><div class="photo-label">Upload a product photo</div>`}
       </div>
