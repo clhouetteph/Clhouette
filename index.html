@@ -1687,8 +1687,12 @@ try {
       body:params
     });
 
-    alert("Reservation Inquiry Sent! Thank you for choosing C-LHOUETTE! Your reservation inquiry has been submitted. Please check your email inbox, including your Spam/Junk folder, for updates and confirmation from C-LHOUETTE. Please note that your reservation is not yet confirmed until our team reviews and approves your request.");
-
+    alert(
+  "Reservation Inquiry Sent!\n\n" +
+  "Thank you for choosing C-LHOUETTE! Your reservation inquiry has been submitted.\n\n" +
+  "Please check your email inbox, including Spam/Junk, for updates and confirmation from C-LHOUETTE.\n\n" +
+  "Your reservation is NOT YET CONFIRMED until our team reviews and approves your request."
+);
     document.getElementById("reservationForm").reset();
     document.getElementById("rentalSummary").textContent =
       "Select your rental dates to calculate the estimated rental cost.";
