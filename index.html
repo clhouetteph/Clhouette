@@ -658,12 +658,14 @@ rgba(250,247,244,0.85) 95%
 
   <div class="form-row">
     <label>Rental start date</label>
-   <input id="formStartDate" required type="date">
+   <input id="formStartDate" required type="date"
+  readonly style="pointer-events:none;background:#faf7f8;">
   </div>
 
   <div class="form-row">
     <label>Rental end / return date</label>
-    <input id="formEndDate" required type="date">
+  <input id="formEndDate" required type="date"
+  readonly style="pointer-events:none;background:#faf7f8;">
   </div>
 
   <div class="form-row">
@@ -737,6 +739,18 @@ const AVAILABILITIES = ["available","soon"];
    - These help the Stylist make recommendations.
    - You can add more colors/skin-tone tags later.
    ========================================================= */
+
+const DRESS_IDS = {
+  "The Muse Dress": "D001",
+  "Afterglow Mini": "D002",
+  "Sunday Satin": "D003",
+  "Petal Hour": "D004",
+  "The Valedict": "D005",
+  "Midnight Edit": "D006",
+  "Soft Focus": "D007",
+  "Rose Theory": "D008",
+  "City Classic": "D009"
+};
 
 const dresses = [
   {
@@ -1165,7 +1179,7 @@ if(fitMatches !== null) summary += " matching your measurements";
     <br>Fit estimates are not guaranteed.
   </div>
 ` : ""}
-        <div class="price">₱${d.budget.toLocaleString()} / day</div>
+        <div class="price">₱${d.budget.toLocaleString()} / 3 day</div>
         <button class="reserve" onclick='openModal(${JSON.stringify(d.name)})'>Reserve / Inquire</button>
       </div>
     </article>`).join("") :
@@ -1215,6 +1229,9 @@ function calendarDayType(dateString) {
   return "available";
 }
 
+
+const calendarCache = new Map();
+
 async function loadRentalCalendar() {
   const area = document.getElementById("rentalCalendarArea");
   if (!area || !selectedDress) return;
@@ -1223,49 +1240,50 @@ async function loadRentalCalendar() {
 
   const requestNumber = ++calendarRequestNumber;
   const dressName = selectedDress.name;
+  const dressId = DRESS_IDS[dressName];
+  const month = calendarMonthString();
+
   calendarLoading = true;
   calendarError = false;
   calendarUnavailable = [];
   renderRentalCalendar();
 
   try {
-    const inventoryResponse = await fetch(BACKEND_URL);
-    if (!inventoryResponse.ok) throw new Error("Inventory unavailable");
-
-    const inventory = await inventoryResponse.json();
-
-    if (!inventory.success || !Array.isArray(inventory.dresses)) {
-      throw new Error("Invalid inventory response");
+    if (!dressId) {
+      throw new Error("Dress ID not found: " + dressName);
     }
 
-    const dress = inventory.dresses.find(item =>
-      item.name === dressName
-    );
+    const cacheKey = dressId + ":" + month;
+    let dates = calendarCache.get(cacheKey);
 
-    if (!dress || !dress.dressId) {
-      throw new Error("Dress ID not found");
-    }
+    if (!dates) {
+      const url = new URL(BACKEND_URL);
+      url.searchParams.set("action", "calendar");
+      url.searchParams.set("dressId", dressId);
+      url.searchParams.set("month", month);
 
-    const url = new URL(BACKEND_URL);
-    url.searchParams.set("action", "calendar");
-    url.searchParams.set("dressId", dress.dressId);
-    url.searchParams.set("month", calendarMonthString());
+      const response = await fetch(url.toString());
 
-    const response = await fetch(url.toString());
-    if (!response.ok) throw new Error("Calendar unavailable");
+      if (!response.ok) {
+        throw new Error("Calendar HTTP " + response.status);
+      }
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!data.success || !data.calendar ||
-        !Array.isArray(data.calendar.unavailableDates)) {
-      throw new Error(data.error || "Invalid calendar response");
+      if (!data.success || !data.calendar ||
+          !Array.isArray(data.calendar.unavailableDates)) {
+        throw new Error(data.error || "Invalid calendar response");
+      }
+
+      dates = data.calendar.unavailableDates;
+      calendarCache.set(cacheKey, dates);
     }
 
     if (requestNumber !== calendarRequestNumber ||
         !selectedDress ||
         selectedDress.name !== dressName) return;
 
-    calendarUnavailable = data.calendar.unavailableDates;
+    calendarUnavailable = dates;
     calendarLoading = false;
     renderRentalCalendar();
 
@@ -1276,9 +1294,11 @@ async function loadRentalCalendar() {
     calendarError = true;
     calendarUnavailable = [];
     renderRentalCalendar();
-    console.error("Rental calendar:", error);
+
+    console.error("Calendar loading failed:", error);
   }
 }
+
 
 function renderRentalCalendar() {
   const area = document.getElementById("rentalCalendarArea");
@@ -1377,38 +1397,86 @@ function changeCalendarMonth(direction) {
   loadRentalCalendar();
 }
 
-function selectCalendarDay(dateString) {
-  if (calendarLoading || calendarError ||
+
+async function selectCalendarDay(dateString) {
+  if (calendarLoading || calendarError || !selectedDress) return;
+
+  const today = calendarDateString(new Date());
+
+  if (dateString < today ||
       calendarDayType(dateString) !== "available") return;
 
-  if (!calendarStart || calendarEnd || dateString < calendarStart) {
-    calendarStart = dateString;
-    calendarEnd = "";
-  } else {
-    const rangeHasConflict = calendarUnavailable.some(item =>
-      calendarStart <= item.end && dateString >= item.start
-    );
+  const start = new Date(dateString + "T12:00:00");
+  const end = new Date(start);
+  end.setDate(end.getDate() + 2);
 
-    if (rangeHasConflict) {
-      alert("These dates include a booked or blocked day. Please choose another range. ♡");
+  const endString = calendarDateString(end);
+  const dressName = selectedDress.name;
+  const dressId = DRESS_IDS[dressName];
+
+  const feedback = document.querySelector(".calendar-feedback");
+
+  if (feedback) {
+    feedback.textContent = "Checking your 3-day rental period... ♡";
+  }
+
+  calendarLoading = true;
+  renderRentalCalendar();
+
+  try {
+    const url = new URL(BACKEND_URL);
+    url.searchParams.set("action", "availability");
+    url.searchParams.set("dressId", dressId);
+    url.searchParams.set("start", dateString);
+    url.searchParams.set("end", endString);
+
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      throw new Error("Availability HTTP " + response.status);
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !data.availability) {
+      throw new Error(data.error || "Availability response failed");
+    }
+
+    if (!selectedDress || selectedDress.name !== dressName) return;
+
+    if (!data.availability.availableForRequestedDates) {
+      alert(
+        "Sorry, this 3-day period includes booked or blocked dates. " +
+        "Please choose another start date. ♡"
+      );
       return;
     }
 
-    calendarEnd = dateString;
+    calendarStart = dateString;
+    calendarEnd = endString;
+
+    document.getElementById("formStartDate").value = calendarStart;
+    document.getElementById("formEndDate").value = calendarEnd;
+
+    availabilityCheckNumber++;
+    calculateRental();
+
+    const summary = document.getElementById("rentalSummary");
+    const message = document.createElement("p");
+    message.id = "availabilityMessage";
+    message.style.color = "#477451";
+    message.textContent = "✓ Available for your selected 3-day rental!";
+    summary.appendChild(message);
+
+  } catch (error) {
+    console.error("3-day availability check failed:", error);
+    alert("We couldn't verify those dates. Please try again.");
+  } finally {
+    calendarLoading = false;
+    renderRentalCalendar();
   }
-
-  document.getElementById("formStartDate").value = calendarStart;
-  document.getElementById("formEndDate").value = calendarEnd;
-
-  availabilityCheckNumber++;
-  calculateRental();
-
-  if (calendarEnd) {
-    showRentalAvailability();
-  }
-
-  renderRentalCalendar();
 }
+
 
 /* =========================================================
    RESERVATION MODAL
@@ -1505,7 +1573,7 @@ async function submitInquiry(e){
   const rentalDays = Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
 
   // Make sure the dates are valid
-  if(rentalDays <= 0){
+  if(rentalDays <= 3){
     alert("Please select a valid rental start and return date.");
     btn.disabled = false;
     btn.textContent = "Send Reservation Request";
@@ -1516,7 +1584,9 @@ async function submitInquiry(e){
   const dailyRate = Number(selectedDress.budget);
 
   // Calculate estimated total
-  const estimatedTotal = dailyRate * rentalDays;
+  
+const estimatedTotal = dailyRate;
+
 
   // Show the calculation
   document.getElementById("rentalSummary").innerHTML =
@@ -1533,7 +1603,7 @@ async function submitInquiry(e){
     size: selectedSize,
     occasion: selectedOccasion,
 
-    budget: "₱" + dailyRate.toLocaleString() + " / day",
+    budget: "₱" + dailyRate.toLocaleString() + " / 3 day",
     style: selectedDress.style,
 
     rentalStartDate: startDate,
@@ -1644,6 +1714,9 @@ async function showRentalAvailability() {
     }
   } catch (error) {
     if (checkNumber !== availabilityCheckNumber) return;
+    
+console.error("Rental availability error:", error);
+
 
     const message = document.getElementById("availabilityMessage");
     if (message) {
@@ -1674,49 +1747,31 @@ renderRentalCalendar();
   calculateRental();
   showRentalAvailability();
 });
-function calculateRental(){
-  if(!selectedDress) return;
+
+function calculateRental() {
+  if (!selectedDress) return;
 
   const startDate = document.getElementById("formStartDate").value;
   const endDate = document.getElementById("formEndDate").value;
   const summary = document.getElementById("rentalSummary");
 
-  if(!startDate || !endDate){
+  if (!startDate || !endDate) {
     summary.textContent =
-      "Select your rental dates to calculate the estimated rental cost.";
+      "Choose a start date to select your 3-day rental.";
     return;
   }
 
-  const start = new Date(startDate + "T00:00:00");
-  const end = new Date(endDate + "T00:00:00");
-
-  const difference = end - start;
-  const rentalDays =
-    Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
-
-  if(rentalDays <= 0){
-    summary.innerHTML =
-      "<strong>Please select a valid return date.</strong>";
-    return;
-  }
-
-  const dailyRate = Number(selectedDress.budget);
-  const estimatedTotal = dailyRate * rentalDays;
+  const packagePrice = Number(selectedDress.budget);
 
   summary.innerHTML =
     "<strong>Rental summary</strong><br>" +
-    "Rental period: " +
-    rentalDays +
-    " day" +
-    (rentalDays === 1 ? "" : "s") +
-    "<br>" +
-    "Daily rate: ₱" +
-    dailyRate.toLocaleString() +
-    "<br>" +
-    "<strong>Estimated total: ₱" +
-    estimatedTotal.toLocaleString() +
+    "Rental period: " + startDate + " to " + endDate +
+    "<br>Duration: 3 days" +
+    "<br><strong>Total rental price: ₱" +
+    packagePrice.toLocaleString() +
     "</strong>";
-}  
+}
+
 window.addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal()});
 
 /* =========================================================
