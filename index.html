@@ -894,6 +894,7 @@ if(!selectedOccasion){
   const count = dresses.filter(matches).length;
 
   message.textContent = count
+    ?
     `${count} ${count === 1 ? "dress matches" : "dresses match"} your measurements! ♡ Explore your recommendations below. ✨ 3/3 = Best Fit (all three measurements align). 💕 2/3 = Potential Fit (two measurements align and may still work beautifully). Please review the dress measurements before reserving.`
   : "No matches just yet! ♡ Try exploring another occasion, budget, or style to discover more options.";
 
