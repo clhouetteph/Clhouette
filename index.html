@@ -527,8 +527,14 @@ rgba(250,247,244,0.85) 95%
     <button class="close" onclick="closeModal()">Close</button>
     <p class="eyebrow">RESERVE / INQUIRE</p>
     <h2 id="selectedTitle">Reservation request</h2>
-    <p class="note" id="selectedDetails"></p>
-    <form id="reservationForm" onsubmit="submitInquiry(event)">
+   
+<p class="note" id="selectedDetails"></p>
+
+<!-- C-LHOUETTE RENTAL CALENDAR -->
+<div id="rentalCalendarArea" style="display:none;"></div>
+
+<form id="reservationForm" onsubmit="submitInquiry(event)">
+
   <div class="form-row">
     <label>Name</label>
     <input id="customerName" required placeholder="Your name">
