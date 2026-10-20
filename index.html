@@ -147,6 +147,79 @@ rgba(250,247,244,0.85) 95%
 .hero {
   background: transparent;
 }
+  
+/* =========================================
+   C-LHOUETTE POLICY & FAQ DESIGN
+   ========================================= */
+
+.rental-guide {
+  max-width: 1180px;
+  margin: 30px auto;
+  padding: 0 5%;
+}
+
+.rental-guide-inner {
+  background: rgba(255,255,255,.94);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 26px;
+  box-shadow: var(--shadow);
+}
+
+.policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+  margin: 20px 0 26px;
+}
+
+.policy-card {
+  background: #faf4f6;
+  border: 1px solid #eadde2;
+  border-radius: 17px;
+  padding: 19px;
+}
+
+.policy-card h3 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.policy-card p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.policy-card.wide {
+  grid-column: 1 / -1;
+}
+
+.policy-faq {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+}
+
+.policy-faq summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.policy-faq p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 12px 0 2px;
+}
+
+@media(max-width:560px) {
+  .policy-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -167,7 +240,137 @@ rgba(250,247,244,0.85) 95%
   </div>
 </section>
 
-<main class="wrap">
+<!-- =========================================
+     C-LHOUETTE POLICY & FAQ — EASY EDIT AREA
+     Edit wording, amounts, or questions below.
+     ========================================= -->
+
+<section class="rental-guide" id="rentalPolicy">
+  <div class="rental-guide-inner">
+
+    <p class="eyebrow">PLEASE READ BEFORE RENTING</p>
+    <h2>Before You Rent ♡</h2>
+    <p class="helper">
+      A few things to know before reserving your
+      C-LHOUETTE look.
+    </p>
+
+    <!-- RENTAL & SECURITY POLICIES -->
+    <!-- Copy a policy-card block to add another policy. -->
+
+    <div class="policy-grid">
+
+      <div class="policy-card">
+        <h3>🪪 Valid ID Required</h3>
+        <p>
+          A valid government-issued ID is required
+          privately after reservation approval and
+          before dress release.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>🛡️ ₱1,000 Security Deposit</h3>
+        <p>
+          Required before dress release. Refunded
+          immediately after return inspection,
+          less any applicable charges.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>⏰ Late Returns</h3>
+        <p>
+          An additional ₱200 is charged for each
+          day past the agreed return date.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>👗 Dress Care & Damages</h3>
+        <p>
+          Return dresses in good condition.
+          Alterations are not allowed.
+          Damage charges may apply.
+          Please check dress measurements carefully.
+        </p>
+      </div>
+
+      <div class="policy-card wide">
+        <h3>🚚 Payment & Shipping</h3>
+        <p>
+          After submitting an inquiry, contact our
+          official page to coordinate payment and
+          delivery. Customers shoulder applicable
+          delivery and return shipping fees.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- FREQUENTLY ASKED QUESTIONS -->
+    <!-- Copy one details block to add a new FAQ. -->
+
+    <h2 style="font-size:23px">
+      Frequently Asked Questions
+    </h2>
+    <p class="helper">
+      Tap a question to see the answer.
+    </p>
+
+    <details class="policy-faq">
+      <summary>
+        Is my reservation confirmed immediately?
+      </summary>
+      <p>
+        No. Reservations are confirmed only after
+        approval and payment verification.
+      </p>
+    </details>
+
+    <details class="policy-faq">
+      <summary>
+        When will my security deposit be refunded?
+      </summary>
+      <p>
+        Immediately after the returned dress passes
+        inspection, less any applicable deductions.
+      </p>
+    </details>
+
+    <details class="policy-faq">
+      <summary>
+        What happens if I damage the dress?
+      </summary>
+      <p>
+        Charges may apply for damage beyond normal
+        wear. Specific damage fees will be provided
+        before rental confirmation.
+      </p>
+    </details>
+
+    <details class="policy-faq">
+      <summary>
+        How is my valid ID protected?
+      </summary>
+      <p>
+        IDs are collected privately and stored
+        with restricted staff access. They are
+        deleted within 7 days after rental
+        completion and resolution of outstanding
+        issues, unless longer retention is required
+        by law.
+      </p>
+    </details>
+
+    <!-- ADD MORE FAQS ABOVE THIS LINE -->
+
+  </div>
+</section>
+
+<!-- END OF POLICY & FAQ SECTION -->
+
+<main class="wrap"> 
   <section class="panel">
     <p class="eyebrow">START HERE</p>
     <h2>What are you dressing for?</h2>
