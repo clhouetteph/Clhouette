@@ -627,7 +627,7 @@ rgba(250,247,244,0.85) 95%
           <li>Skin-tone preference</li>
           <li>Keywords such as elegant, trendy, romantic, classic, minimalist, satin, etc.</li>
         </ul>
-        <div class="tip"><b>Tip:</b> You can add more dress information in the INVENTORY section of this file, including colors and skin-tone-friendly colors. The stylist will then use those details in its recommendations.</div>
+        <div class="tip"><b>Tip:</b> Manage dresses, colors, and skin-tone tags in the MAIN C-LHOUETTE Google Sheets Manager.</div>
       </div>
     </div>
   </section>
@@ -752,7 +752,7 @@ const DRESS_IDS = {
   "City Classic": "D009"
 };
 
-const dresses = [
+let dresses = [
   {
     name:"The Muse Dress",
     image:"the muse dress.jpg",
@@ -896,23 +896,70 @@ function init(){
   document.getElementById("budget").onchange=render;
   document.getElementById("style").onchange=render;
 }
+  // Load both occasions and dresses from the MAIN C-LHOUETTE Manager.
   async function loadLiveOccasions() {
-  try {
-    const response = await fetch(BACKEND_URL);
-    if (!response.ok) throw new Error("Could not load occasions");
+    try {
+      const response = await fetch(BACKEND_URL, {cache: "no-store"});
+      if (!response.ok) throw new Error("Inventory HTTP " + response.status);
+      const data = await response.json();
+      if (!data.success || !Array.isArray(data.dresses) ||
+          !Array.isArray(data.occasions)) {
+        throw new Error("Invalid live inventory response");
+      }
 
-    const data = await response.json();
+      // Convert Sheets API fields into the website's existing format.
+      const converted = data.dresses.map(item => {
+        let measurements = item.measurements || {};
+        if (typeof measurements === "string") {
+          try { measurements = JSON.parse(measurements); }
+          catch (error) { measurements = {}; }
+        }
+        const asArray = value => Array.isArray(value) ? value :
+          String(value || "").split(",").map(x => x.trim()).filter(Boolean);
+        return {
+          dressId: String(item.dressId || "").trim(),
+          name: String(item.name || "").trim(),
+          image: String(item.image || "").trim(),
+          size: asArray(item.sizes),
+          occasion: asArray(item.occasions),
+          budget: Number(item.price),
+          priceType: item.priceType,
+          style: String(item.style || "").trim(),
+          color: String(item.color || "").trim(),
+          bestForSkin: asArray(item.skinTones),
+          keywords: asArray(item.keywords),
+          measurements,
+          availability: String(item.availability || "soon").toLowerCase(),
+          dressLength: item.dressLength,
+          fitNotes: item.fitNotes,
+          condition: item.condition,
+          careInstructions: item.careInstructions
+        };
+      });
+      if (converted.some(d => !d.dressId || !d.name ||
+          !Number.isFinite(d.budget) || d.budget < 0)) {
+        throw new Error("Invalid dress details from Manager");
+      }
 
-    if (!data.success || !Array.isArray(data.occasions)) {
-      throw new Error("Invalid occasions response");
+      // Commit only after the entire response has passed validation.
+      dresses = converted;
+      liveOccasions = data.occasions;
+      renderOccasions();
+      populateFilters();
+      renderSizes();
+      if (selectedOccasion && (selectedSize || fitMatches !== null)) {
+        if (fitMatches !== null) {
+          // Recalculate measurement matches against the live inventory.
+          findMyFit();
+        } else {
+          render();
+        }
+      }
+      console.info("C-LHOUETTE live inventory loaded:", dresses.length, "dresses");
+    } catch (error) {
+      console.error("MAIN Manager inventory could not load; using saved catalog:", error);
     }
-
-    liveOccasions = data.occasions;
-    renderOccasions();
-  } catch (error) {
-    console.warn("Using default occasions:", error);
   }
-}
 function renderOccasions(){
  document.getElementById("occasionButtons").innerHTML=liveOccasions.map(o=>`
     <button class="occasion-btn" onclick="chooseOccasion('${o.name.replace(/'/g,"\\'")}',this)">
@@ -1055,7 +1102,7 @@ function clearFit(){
 function populateFilters(){
   const budgetValues=[...new Set(dresses.map(d=>d.budget))].sort((a,b)=>a-b);
   document.getElementById("budget").innerHTML='<option value="">Any budget</option>'+budgetValues.map(v=>`<option value="${v}">Up to ₱${Number(v).toLocaleString()}</option>`).join("");
-  document.getElementById("style").innerHTML='<option value="">Any style</option>'+STYLES.map(s=>`<option>${s}</option>`).join("");
+  document.getElementById("style").innerHTML='<option value="">Any style</option>'+[...new Set(dresses.map(d=>d.style).filter(Boolean))].sort().map(s=>`<option>${s}</option>`).join("");
 }
 
 function chooseOccasion(o,btn){
@@ -1179,7 +1226,7 @@ if(fitMatches !== null) summary += " matching your measurements";
     <br>Fit estimates are not guaranteed.
   </div>
 ` : ""}
-        <div class="price">₱${d.budget.toLocaleString()} / 3 day</div>
+        <div class="price">₱${d.budget.toLocaleString()} / 3-day package</div>
         <button class="reserve" onclick='openModal(${JSON.stringify(d.name)})'>Reserve / Inquire</button>
       </div>
     </article>`).join("") :
@@ -1240,7 +1287,7 @@ async function loadRentalCalendar() {
 
   const requestNumber = ++calendarRequestNumber;
   const dressName = selectedDress.name;
-  const dressId = DRESS_IDS[dressName];
+  const dressId = selectedDress.dressId || DRESS_IDS[dressName];
   const month = calendarMonthString();
 
   calendarLoading = true;
@@ -1412,7 +1459,7 @@ async function selectCalendarDay(dateString) {
 
   const endString = calendarDateString(end);
   const dressName = selectedDress.name;
-  const dressId = DRESS_IDS[dressName];
+  const dressId = selectedDress.dressId || DRESS_IDS[dressName];
 
   const feedback = document.querySelector(".calendar-feedback");
 
@@ -1486,29 +1533,15 @@ async function checkSelectedDressAvailability(startDate, endDate) {
     throw new Error("Please select a dress.");
   }
 
-  const response = await fetch(BACKEND_URL);
-  if (!response.ok) {
-    throw new Error("Could not load dress information.");
-  }
-
-  const inventory = await response.json();
-
-  if (!inventory.success || !Array.isArray(inventory.dresses)) {
-    throw new Error("Dress information is temporarily unavailable.");
-  }
-
-  const matchingDress = inventory.dresses.find(function(dress) {
-    return dress.name === selectedDress.name;
-  });
-
-  if (!matchingDress || !matchingDress.dressId) {
-    throw new Error("Availability is not yet set up for this dress.");
+  const dressId = selectedDress.dressId || DRESS_IDS[selectedDress.name];
+  if (!dressId) {
+    throw new Error("Availability is not set up for this dress.");
   }
 
   const url = new URL(BACKEND_URL);
 
   url.searchParams.set("action", "availability");
-  url.searchParams.set("dressId", matchingDress.dressId);
+  url.searchParams.set("dressId", dressId);
   url.searchParams.set("start", startDate);
   url.searchParams.set("end", endDate);
 
@@ -1530,7 +1563,7 @@ async function checkSelectedDressAvailability(startDate, endDate) {
   selectedDress=dresses.find(d=>d.name===name);
   if(!selectedDress)return;
   document.getElementById("selectedTitle").textContent="Reserve / Inquire — "+selectedDress.name;
-  document.getElementById("selectedDetails").textContent=`${selectedDress.style} • ${selectedDress.color || "Color not specified"} • ${selectedDress.occasion.join(" / ")} • ₱${selectedDress.budget.toLocaleString()} / event • Size ${selectedSize}`;
+  document.getElementById("selectedDetails").textContent=`${selectedDress.style} • ${selectedDress.color || "Color not specified"} • ${selectedDress.occasion.join(" / ")} • ₱${selectedDress.budget.toLocaleString()} / 3-day package • Size ${selectedSize}`;
 
 document.getElementById("formStartDate").value = "";
 document.getElementById("formEndDate").value = "";
@@ -1573,15 +1606,14 @@ async function submitInquiry(e){
   const rentalDays = Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
 
   // Make sure the dates are valid
-  if(rentalDays <= 3){
+  if(rentalDays !== 3){
     alert("Please select a valid rental start and return date.");
     btn.disabled = false;
     btn.textContent = "Send Reservation Request";
     return;
   }
 
-  // Daily rental price of the selected dress
-  const dailyRate = Number(selectedDress.budget);
+  // Price is the total 3-day package, NOT a daily rate.\n  const dailyRate = Number(selectedDress.budget);
 
   // Calculate estimated total
   
@@ -1591,9 +1623,7 @@ const estimatedTotal = dailyRate;
   // Show the calculation
   document.getElementById("rentalSummary").innerHTML =
     "<strong>Rental summary</strong><br>" +
-    rentalDays + " day" + (rentalDays === 1 ? "" : "s") +
-    " × ₱" + dailyRate.toLocaleString() +
-    "/day = <strong>₱" + estimatedTotal.toLocaleString() + "</strong>";
+    "3-day rental package = <strong>₱" + estimatedTotal.toLocaleString() + "</strong>";
 
   const params = new URLSearchParams({
     customerName: document.getElementById("customerName").value,
@@ -1603,7 +1633,7 @@ const estimatedTotal = dailyRate;
     size: selectedSize,
     occasion: selectedOccasion,
 
-    budget: "₱" + dailyRate.toLocaleString() + " / 3 day",
+    budget: "₱" + dailyRate.toLocaleString() + " / 3-day package",
     style: selectedDress.style,
 
     rentalStartDate: startDate,
@@ -1802,7 +1832,7 @@ function parseStylist(text){
   else if(t.includes("dinner")||t.includes("date")) occasion="Dinner";
 
   let size="";
-  SIZES.forEach(s=>{if(new RegExp("\\b"+s.toLowerCase()+"\\b").test(t))size=s});
+  [...new Set(dresses.flatMap(d=>d.size))].forEach(s=>{if(new RegExp("\\b"+s.toLowerCase()+"\\b").test(t))size=s});
 
   let budget=null;
   const peso=t.match(/(?:₱|php|p)\s?([0-9,]+)/i);
@@ -1850,7 +1880,7 @@ function recommend(text){
 
   const top=scored.slice(0,3);
   let response="Based on what you told me, I'd look at:\n\n";
-  response+=top.map((d,i)=>`${i+1}. ${d.name} — ${d.style}, ${d.color || "color not specified"}, ₱${d.budget.toLocaleString()}/event. ${d.availability==="available"?"Currently available.":"Coming soon."}`).join("\n");
+  response+=top.map((d,i)=>`${i+1}. ${d.name} — ${d.style}, ${d.color || "color not specified"}, ₱${d.budget.toLocaleString()}/3-day package. ${d.availability==="available"?"Currently available.":"Coming soon."}`).join("\n");
   if(p.skin) response+=`\n\nFor ${p.skin} skin, I prioritized pieces tagged in our inventory as suitable for that tone.`;
   if(p.occasion) response+=`\nFor your ${p.occasion.toLowerCase()}, my strongest pick is ${top[0].name}.`;
   response+="\n\nIf you want, tell me more about the vibe you want and I'll narrow it down further. ✨";
