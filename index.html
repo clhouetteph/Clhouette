@@ -1596,7 +1596,7 @@ async function submitInquiry(e){
 
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
-  btn.textContent = "Sending...";
+ btn.textContent = "Checking availability...";
 
   const startDate = document.getElementById("formStartDate").value;
   const endDate = document.getElementById("formEndDate").value;
@@ -1679,7 +1679,7 @@ try {
     return;
   }
 
-  btn.textContent = "Sending...";
+  btn.textContent = "Sending reservation...";
 
   await fetch(RESERVATION_URL,{
       method:"POST",
