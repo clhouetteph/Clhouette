@@ -70,7 +70,7 @@ header{padding:22px 5%;display:flex;justify-content:space-between;align-items:ce
 .size-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .size-btn{min-width:58px;border:1px solid var(--line);background:#fff;padding:12px 16px;border-radius:999px;font-weight:800}
 .size-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
 .field label,.form-row label{display:block;font-size:12px;font-weight:800;margin-bottom:7px}
 .field select,.field input,.form-row input,.form-row textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;outline:none}
 .field select:focus,.field input:focus,.form-row input:focus,.form-row textarea:focus{border-color:var(--accent)}
@@ -92,6 +92,14 @@ header{padding:22px 5%;display:flex;justify-content:space-between;align-items:ce
 .info{padding:18px}
 .name{font-size:20px;font-weight:900}
 .meta{color:var(--muted);font-size:13px;line-height:1.5;margin:7px 0 12px}
+.measurement-detail{margin-top:7px;line-height:1.65}
+.catalog-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:16px 0}
+.catalog-tools input{flex:1;min-width:200px;border:1px solid var(--line);border-radius:12px;padding:13px}
+.catalog-tools button{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.browse-panel{margin-top:22px;border-top:1px solid var(--line);padding-top:22px}
+.browse-panel[hidden]{display:none}
+.catalog-entry{margin-top:22px;padding:20px;border:1px solid var(--line);border-radius:18px;background:#fffafc}
+.catalog-entry button{background:var(--ink);color:white;border:0;padding:12px 18px;border-radius:12px;font-weight:800}
 .price{font-weight:900;margin-bottom:14px}
 .reserve{width:100%;border:0;background:var(--ink);color:#fff;padding:13px;border-radius:12px;font-weight:800}
 .empty{background:#fff;border:1px dashed var(--line);padding:35px;text-align:center;border-radius:18px;color:var(--muted)}
@@ -589,6 +597,10 @@ rgba(250,247,244,0.85) 95%
           <label>Style</label>
           <select id="style"><option value="">Any style</option></select>
         </div>
+         <div class="field">
+           <label>Dress Length</label>
+           <select id="dressLength"><option value="">Any length</option><option value="Long">Long</option><option value="Knee Length">Knee Length</option><option value="Mini">Mini</option></select>
+         </div>
         
      </div>
       <section class="results">
@@ -602,10 +614,26 @@ rgba(250,247,244,0.85) 95%
         </div>
         <div class="grid" id="catalog"></div>
       </section>
-    </div>
-  </section>
+     </div>
+     <div class="catalog-entry">
+       <h2>Want to see everything? ♡</h2>
+       <p class="helper">Browse our full collection without choosing an occasion or size first.</p>
+       <button type="button" onclick="openFullCatalog()">Browse All Dresses →</button>
+     </div>
+     <section id="fullCatalogArea" class="browse-panel" hidden>
+       <p class="eyebrow">THE FULL COLLECTION</p>
+       <h2>Browse All Dresses</h2>
+       <p class="helper">Search by dress name, color, style, occasion, or length. Coming Soon pieces are included for browsing.</p>
+       <div class="catalog-tools">
+         <input id="catalogSearch" type="search" placeholder="Search for The Muse Dress, black, mini..." aria-label="Search all dresses" oninput="renderFullCatalog()">
+         <button type="button" onclick="closeFullCatalog()">Close catalog</button>
+       </div>
+       <p class="helper" id="fullCatalogCount"></p>
+       <div class="grid" id="fullCatalogGrid"></div>
+     </section>
+   </section>
 
-  <section class="ai-section panel">
+   <section class="ai-section panel">
     <p class="eyebrow">C-LHOUETTE STYLIST</p>
     <h2>Not sure what would look good?</h2>
     <p class="helper">Tell the stylist about your event, skin tone, style preference, size, or budget. It will recommend dresses from the current C-LHOUETTE collection.</p>
@@ -898,6 +926,7 @@ function init(){
   populateFilters();
   document.getElementById("budget").onchange=render;
   document.getElementById("style").onchange=render;
+  document.getElementById("dressLength").onchange=render;
 }
   // Load both occasions and dresses from the MAIN C-LHOUETTE Manager.
   async function loadLiveOccasions() {
@@ -950,6 +979,7 @@ function init(){
       renderOccasions();
       populateFilters();
       renderSizes();
+      renderFullCatalog();
       if (selectedOccasion && (selectedSize || fitMatches !== null)) {
         if (fitMatches !== null) {
           // Recalculate measurement matches against the live inventory.
@@ -1173,6 +1203,7 @@ document.getElementById("fitMessage").textContent = "";
   document.querySelectorAll(".occasion-btn,.size-btn").forEach(x=>x.classList.remove("active"));
   document.getElementById("budget").value="";
   document.getElementById("style").value="";
+  document.getElementById("dressLength").value="";
   window.scrollTo({top:document.querySelector(".panel").offsetTop-80,behavior:"smooth"});
 }
 function matches(d){
@@ -1191,8 +1222,8 @@ function matches(d){
   const st=document.getElementById("style").value;
   if(b && d.budget>Number(b)) return false;
   if(st && d.style!==st) return false;
-
-
+  const length=document.getElementById("dressLength").value;
+  if(length && normalizeDressLength(d.dressLength)!==length) return false;
   return true;
 }
 function render(){
@@ -1210,33 +1241,77 @@ if(fitMatches !== null) summary += " matching your measurements";
   const st=document.getElementById("style").value;
   if(b) summary+=`, up to ₱${Number(b).toLocaleString()}`;
   if(st) summary+=`, ${st.toLowerCase()} style`;
+  const length=document.getElementById("dressLength").value;
+  if(length) summary+=`, ${length.toLowerCase()} length`;
   document.getElementById("selectionText").textContent=summary+".";
-  cat.innerHTML=list.length ? list.map(d=>`
-    <article class="card">
-      <div class="photo">
-        <span class="availability-badge ${d.availability === "available" ? "available" : "soon"}" title="Date-specific bookings and blocked dates appear in the rental calendar">${d.availability === "available" ? "Available · Check dates" : "Coming Soon"}</span>
-        ${d.image ? `<img src="${d.image}" alt="${d.name}">` :
-        `<div class="dress-shape"><div class="dress-top"></div><div class="dress-skirt"></div></div><div class="photo-label">Upload a product photo</div>`}
-      </div>
-      <div class="info">
-        <div class="name">${d.name}</div>
-        <div class="meta">${d.style} • ${d.occasion.join(" / ")}<br>Color: ${d.color || "Not specified"}<br>Available in: ${d.size.join(", ")} • ${d.availability==="available"?"Available":"Coming soon"}</div>
-        ${fitMatches !== null ? `
-  <div class="meta">
-    Estimated fit: ${fitMatches.get(d.name)
-      .filter(m => !selectedSize || m.size === selectedSize)
-      .map(m => `${m.size} (${m.score}/3)`)
-      .join(", ")}
-    <br>Fit estimates are not guaranteed.
-  </div>
-` : ""}
-        <div class="price">₱${d.budget.toLocaleString()} / 3-day package</div>
-        <button class="reserve" onclick='openModal(${JSON.stringify(d.name)})'>Reserve / Inquire</button>
-      </div>
-    </article>`).join("") :
-    `<div class="empty">No dresses match all of your selected options.<br>Try changing your size, budget, style, date, or availability.</div>`;
+  cat.innerHTML=list.length ? list.map(d=>dressCardHTML(d, true)).join("") :
+    `<div class="empty">No dresses match all of your selected options.<br>Try changing your size, budget, style, or dress length.</div>`;
 }
 
+
+
+// Keep Google Sheets as the source for dress lengths, measurements, and fit notes.
+function normalizeDressLength(value){
+  const v=String(value || "").trim().toLowerCase().replace(/[-_]/g," ");
+  if(["long","maxi","floor length","floor length dress"].includes(v)) return "Long";
+  if(["knee length","knee","knee length dress"].includes(v)) return "Knee Length";
+  if(["mini","short","mini dress"].includes(v)) return "Mini";
+  return "";
+}
+function escapeDressText(value){
+  return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);
+}
+function dressMeasurementsHTML(d){
+  let measurements=d.measurements;
+  if(typeof measurements==="string"){
+    try{measurements=JSON.parse(measurements);}catch(_){measurements={};}
+  }
+  if(!measurements || typeof measurements!=="object") return "";
+  const rows=Object.entries(measurements).map(([size,ranges])=>{
+    if(!ranges || typeof ranges!=="object") return "";
+    const format=(v)=>Array.isArray(v)?v.join("–"):String(v ?? "").trim();
+    const fields=["bust","waist","hips"].map(k=>ranges[k] == null ? "" : `${k==="hips"?"Hips":k[0].toUpperCase()+k.slice(1)}: ${escapeDressText(format(ranges[k]))} cm`).filter(Boolean);
+    return fields.length?`<div><strong>${escapeDressText(size)}:</strong> ${fields.join(" · ")}</div>`:"";
+  }).filter(Boolean);
+  return rows.length?`<div class="measurement-detail"><strong>Measurements</strong>${rows.join("")}</div>`:"";
+}
+function dressCardHTML(d, showFit){
+  const fitInfo=showFit && fitMatches!==null && fitMatches.get(d.name);
+  const photo=d.image?`<img src="${escapeDressText(d.image)}" alt="${escapeDressText(d.name)}" loading="lazy">`:
+    `<div class="dress-shape"><div class="dress-top"></div><div class="dress-skirt"></div></div><div class="photo-label">Upload a product photo</div>`;
+  const canReserve=d.availability==="available";
+  return `<article class="card">
+    <div class="photo"><span class="availability-badge ${canReserve?"available":"soon"}">${canReserve?"Available · Check dates":"Coming Soon"}</span>${photo}</div>
+    <div class="info">
+      <div class="name">${escapeDressText(d.name)}</div>
+      <div class="meta">${escapeDressText(d.style)} • ${escapeDressText((d.occasion||[]).join(" / "))}<br>
+        Color: ${escapeDressText(d.color||"Not specified")}<br>
+        Available in: ${escapeDressText((d.size||[]).join(", "))} • ${canReserve?"Available":"Coming soon"}
+        ${normalizeDressLength(d.dressLength)?`<br>Length: ${escapeDressText(normalizeDressLength(d.dressLength))}`:""}
+        ${dressMeasurementsHTML(d)}
+        ${d.fitNotes?`<div class="measurement-detail"><strong>Fit notes:</strong> ${escapeDressText(d.fitNotes)}</div>`:""}
+      </div>
+      ${fitInfo?`<div class="meta">Estimated fit: ${fitInfo.filter(m=>!selectedSize||m.size===selectedSize).map(m=>`${escapeDressText(m.size)} (${m.score}/3)`).join(", ")}<br>Fit estimates are not guaranteed.</div>`:""}
+      <div class="price">₱${Number(d.budget).toLocaleString()} / 3-day package</div>
+      <button class="reserve" ${canReserve?"":"disabled"} onclick='openModal(${JSON.stringify(d.name).replace(/'/g,"&#39;")})'>${canReserve?"Reserve / Inquire":"Coming Soon"}</button>
+    </div>
+  </article>`;
+}
+function openFullCatalog(){
+  const area=document.getElementById("fullCatalogArea");
+  area.hidden=false;
+  renderFullCatalog();
+  area.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function closeFullCatalog(){document.getElementById("fullCatalogArea").hidden=true;}
+function renderFullCatalog(){
+  const area=document.getElementById("fullCatalogArea");
+  if(!area || area.hidden) return;
+  const query=document.getElementById("catalogSearch").value.trim().toLowerCase();
+  const list=dresses.filter(d=>[d.name,d.color,d.style,d.dressLength,...(d.occasion||[]),...(d.keywords||[])].join(" ").toLowerCase().includes(query));
+  document.getElementById("fullCatalogCount").textContent=`Showing ${list.length} of ${dresses.length} dresses`;
+  document.getElementById("fullCatalogGrid").innerHTML=list.length?list.map(d=>dressCardHTML(d,false)).join(""):`<div class="empty">No dresses found. Try a different search.</div>`;
+}
 
 /* C-LHOUETTE VISUAL RENTAL CALENDAR */
 
@@ -1283,7 +1358,9 @@ function calendarDayType(dateString) {
 
 const calendarCache = new Map();
 
-async function loadRentalCalendar() {
+async function loadRentalCalendar(options = {}) {
+  const silent=Boolean(options.silent);
+  const force=Boolean(options.force);
   const area = document.getElementById("rentalCalendarArea");
   if (!area || !selectedDress) return;
 
@@ -1294,10 +1371,12 @@ async function loadRentalCalendar() {
   const dressId = selectedDress.dressId || DRESS_IDS[dressName];
   const month = calendarMonthString();
 
-  calendarLoading = true;
-  calendarError = false;
-  calendarUnavailable = [];
-  renderRentalCalendar();
+  if(!silent){
+    calendarLoading = true;
+    calendarError = false;
+    calendarUnavailable = [];
+    renderRentalCalendar();
+  }
 
   try {
     if (!dressId) {
@@ -1305,13 +1384,14 @@ async function loadRentalCalendar() {
     }
 
     const cacheKey = dressId + ":" + month;
-    let dates = calendarCache.get(cacheKey);
+    let dates = force ? null : calendarCache.get(cacheKey);
 
     if (!dates) {
       const url = new URL(BACKEND_URL);
       url.searchParams.set("action", "calendar");
       url.searchParams.set("dressId", dressId);
       url.searchParams.set("month", month);
+      if(force) url.searchParams.set("_", String(Date.now()));
 
       const response = await fetch(url.toString());
 
@@ -1336,15 +1416,29 @@ async function loadRentalCalendar() {
 
     calendarUnavailable = dates;
     calendarLoading = false;
+    calendarError = false;
+    if(calendarStart){
+      const selectedStart=calendarStart;
+      const selectedEnd=calendarEnd || calendarStart;
+      if(dates.some(item=>item.start<=selectedEnd && item.end>=selectedStart)){
+        calendarStart="";
+        calendarEnd="";
+        document.getElementById("formStartDate").value="";
+        document.getElementById("formEndDate").value="";
+        document.getElementById("rentalSummary").textContent="Those dates were just booked or blocked. Please select new dates.";
+      }
+    }
     renderRentalCalendar();
 
   } catch (error) {
     if (requestNumber !== calendarRequestNumber) return;
 
-    calendarLoading = false;
-    calendarError = true;
-    calendarUnavailable = [];
-    renderRentalCalendar();
+    if(!silent){
+      calendarLoading = false;
+      calendarError = true;
+      calendarUnavailable = [];
+      renderRentalCalendar();
+    }
 
     console.error("Calendar loading failed:", error);
   }
@@ -1565,7 +1659,7 @@ async function checkSelectedDressAvailability(startDate, endDate) {
 }
   function openModal(name){
   selectedDress=dresses.find(d=>d.name===name);
-  if(!selectedDress)return;
+  if(!selectedDress || selectedDress.availability!=="available")return;
   document.getElementById("selectedTitle").textContent="Reserve / Inquire — "+selectedDress.name;
   document.getElementById("selectedDetails").textContent=`${selectedDress.style} • ${selectedDress.color || "Color not specified"} • ${selectedDress.occasion.join(" / ")} • ₱${selectedDress.budget.toLocaleString()} / 3-day package • Size ${selectedSize}`;
 
@@ -1679,8 +1773,8 @@ try {
     return;
   }
 
-  btn.textContent = "Sending reservation...";
-
+btn.textContent = "Sending reservation... Please wait";
+  
   await fetch(RESERVATION_URL,{
       method:"POST",
       mode:"no-cors",
@@ -1905,6 +1999,15 @@ function askStylist(){
 }
 
 init();
+
+// Poll the live calendar only while the reservation modal is open.
+// Bypass the old calendar cache so new Confirmed bookings appear without a page refresh.
+setInterval(()=>{
+  const modal=document.getElementById("modal");
+  if(document.hidden || !modal || !modal.classList.contains("open") || !selectedDress) return;
+  loadRentalCalendar({silent:true,force:true});
+},10000);
+
 </script>
 </body>
 </html>
