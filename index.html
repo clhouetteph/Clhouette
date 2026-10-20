@@ -894,8 +894,8 @@ if(!selectedOccasion){
   const count = dresses.filter(matches).length;
 
   message.textContent = count
-    ? `${count} dress(es) match your measurements and current shopping preferences. See your catalog below. A 2/3 match is only a close fit estimate.`
-    : "No dresses match all your current filters and measurements. Try another size, occasion, or measurement.";
+    `${count} ${count === 1 ? "dress matches" : "dresses match"} your measurements! ♡ Explore your recommendations below. ✨ 3/3 = Best Fit (all three measurements align). 💕 2/3 = Potential Fit (two measurements align and may still work beautifully). Please review the dress measurements before reserving.`
+  : "No matches just yet! ♡ Try exploring another occasion, budget, or style to discover more options.";
 
   document.getElementById("filterArea").scrollIntoView({
     behavior: "smooth",
