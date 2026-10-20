@@ -249,7 +249,7 @@ rgba(250,247,244,0.85) 95%
   <div class="rental-guide-inner">
 
     <p class="eyebrow">PLEASE READ BEFORE RENTING</p>
-    <h2>Before You Rent ♡</h2>
+    <h2>Before You Rent </h2>
     <p class="helper">
       A few things to know before reserving your
       C-LHOUETTE look.
@@ -261,7 +261,7 @@ rgba(250,247,244,0.85) 95%
     <div class="policy-grid">
 
       <div class="policy-card">
-        <h3>🪪 Valid ID Required</h3>
+        <h3> Valid ID Required</h3>
         <p>
           A valid government-issued ID is required
           privately after reservation approval and
@@ -270,7 +270,7 @@ rgba(250,247,244,0.85) 95%
       </div>
 
       <div class="policy-card">
-        <h3>🛡️ ₱1,000 Security Deposit</h3>
+        <h3> ₱1,000 Security Deposit</h3>
         <p>
           Required before dress release. Refunded
           immediately after return inspection,
@@ -279,7 +279,7 @@ rgba(250,247,244,0.85) 95%
       </div>
 
       <div class="policy-card">
-        <h3>⏰ Late Returns</h3>
+        <h3> Late Returns</h3>
         <p>
           An additional ₱200 is charged for each
           day past the agreed return date.
@@ -287,7 +287,7 @@ rgba(250,247,244,0.85) 95%
       </div>
 
       <div class="policy-card">
-        <h3>👗 Dress Care & Damages</h3>
+        <h3> Dress Care & Damages</h3>
         <p>
           Return dresses in good condition.
           Alterations are not allowed.
@@ -297,7 +297,7 @@ rgba(250,247,244,0.85) 95%
       </div>
 
       <div class="policy-card wide">
-        <h3>🚚 Payment & Shipping</h3>
+        <h3> Payment & Shipping</h3>
         <p>
           After submitting an inquiry, contact our
           official page to coordinate payment and
@@ -384,9 +384,9 @@ rgba(250,247,244,0.85) 95%
     </div>
 
 <!-- FIND MY FIT -->
-<div class="fit-finder">
+<div class="fit-finder" id="fitArea" style="display:none">
   <p class="eyebrow">OPTIONAL</p>
-  <h2 style="font-size:23px">📏 Find My Best Fit</h2>
+  <h2 style="font-size:23px"> Find My Best Fit</h2>
   <p>Enter your measurements to find dresses that may fit you best.</p>
 
   <div class="fit-inputs">
@@ -787,6 +787,13 @@ function findMyFit(){
 
   fitMatches = results;
 
+// Switch to measurement-based sizing.
+selectedSize = "";
+
+document.querySelectorAll(".size-btn").forEach(x =>
+  x.classList.remove("active")
+);
+
   if(!selectedOccasion){
     message.textContent =
       "Measurements checked! Choose your occasion to see your matching dresses in the catalog.";
@@ -807,6 +814,7 @@ function findMyFit(){
     block: "start"
   });
 }
+
 function clearFit(){
   document.getElementById("fitBust").value = "";
   document.getElementById("fitWaist").value = "";
@@ -815,37 +823,72 @@ function clearFit(){
 
   fitMatches = null;
 
-  if(selectedOccasion){
+  // Keep the occasion, Budget, and Style selections.
+  if(selectedOccasion && selectedSize){
+    document.getElementById("filterArea").style.display = "block";
     render();
+  } else {
+    document.getElementById("filterArea").style.display = "none";
   }
-}  
+}
+
 function populateFilters(){
   const budgetValues=[...new Set(dresses.map(d=>d.budget))].sort((a,b)=>a-b);
   document.getElementById("budget").innerHTML='<option value="">Any budget</option>'+budgetValues.map(v=>`<option value="${v}">Up to ₱${Number(v).toLocaleString()}</option>`).join("");
   document.getElementById("style").innerHTML='<option value="">Any style</option>'+STYLES.map(s=>`<option>${s}</option>`).join("");
 }
+
 function chooseOccasion(o,btn){
-  selectedOccasion=o;
-  document.querySelectorAll(".occasion-btn").forEach(x=>x.classList.remove("active"));
+  selectedOccasion = o;
+
+  document.querySelectorAll(".occasion-btn").forEach(x =>
+    x.classList.remove("active")
+  );
   btn.classList.add("active");
-  if(fitMatches !== null){
+
   document.getElementById("sizeArea").style.display = "block";
+  document.getElementById("fitArea").style.display = "block";
+
+  if(selectedSize || fitMatches !== null){
+    document.getElementById("filterArea").style.display = "block";
+    render();
+  } else {
+    document.getElementById("filterArea").style.display = "none";
+  }
+
+  document.getElementById("sizeArea").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+
+function chooseSize(s,btn){
+  // Switch to regular size mode.
+  fitMatches = null;
+
+  // Clear previous measurement inputs.
+  document.getElementById("fitBust").value = "";
+  document.getElementById("fitWaist").value = "";
+  document.getElementById("fitHips").value = "";
+  document.getElementById("fitMessage").textContent = "";
+
+  selectedSize = s;
+
+  document.querySelectorAll(".size-btn").forEach(x =>
+    x.classList.remove("active")
+  );
+  btn.classList.add("active");
+
   document.getElementById("filterArea").style.display = "block";
   render();
-  return;
+
+  document.getElementById("filterArea").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
-  document.getElementById("sizeArea").style.display="block";
-  document.getElementById("filterArea").style.display="none";
-  document.querySelector(".size-row").scrollIntoView({behavior:"smooth",block:"center"});
-}
-function chooseSize(s,btn){
-  selectedSize=s;
-  document.querySelectorAll(".size-btn").forEach(x=>x.classList.remove("active"));
-  btn.classList.add("active");
-  document.getElementById("filterArea").style.display="block";
-  render();
-  document.getElementById("filterArea").scrollIntoView({behavior:"smooth",block:"start"});
-}
+
 function resetFilters(){
   selectedOccasion="";
   selectedSize="";
@@ -856,6 +899,7 @@ document.getElementById("fitHips").value = "";
 document.getElementById("fitMessage").textContent = "";
   document.getElementById("filterArea").style.display="none";
   document.getElementById("sizeArea").style.display="none";
+  document.getElementById("fitArea").style.display="none";
   document.querySelectorAll(".occasion-btn,.size-btn").forEach(x=>x.classList.remove("active"));
   document.getElementById("budget").value="";
   document.getElementById("style").value="";
