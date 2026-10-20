@@ -248,6 +248,117 @@ rgba(250,247,244,0.85) 95%
   box-shadow: 0 2px 8px rgba(0,0,0,.07);
 }
 
+
+/* C-LHOUETTE RENTAL CALENDAR */
+
+.rental-calendar {
+  background: #fffafc;
+  border: 1px solid #eadde3;
+  border-radius: 18px;
+  padding: 18px;
+  margin: 18px 0;
+}
+
+.calendar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.calendar-heading strong {
+  font-size: 17px;
+  color: #47333d;
+}
+
+.calendar-nav {
+  border: 1px solid #eadde3;
+  background: white;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 800;
+}
+
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 11px;
+  color: #8b7881;
+  padding: 8px 0;
+}
+
+.calendar-day {
+  min-height: 42px;
+  border: 1px solid #eee4e8;
+  border-radius: 10px;
+  background: #fff;
+  color: #47333d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.calendar-day.available {
+  background: #edf5ee;
+  border-color: #d7e9d9;
+}
+
+.calendar-day.booked {
+  background: #eab9ca;
+  color: #703a51;
+}
+
+.calendar-day.blocked {
+  background: #e4e1e3;
+  color: #777078;
+}
+
+.calendar-day.selected {
+  background: #a87593;
+  border-color: #a87593;
+  color: white;
+}
+
+.calendar-day:disabled {
+  cursor: not-allowed;
+  opacity: .65;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+  font-size: 11px;
+  color: #695b62;
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.calendar-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.calendar-feedback {
+  font-size: 12px;
+  color: #775968;
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+
 </style>
 </head>
 <body>
@@ -1061,6 +1172,244 @@ if(fitMatches !== null) summary += " matching your measurements";
     `<div class="empty">No dresses match all of your selected options.<br>Try changing your size, budget, style, date, or availability.</div>`;
 }
 
+
+/* C-LHOUETTE VISUAL RENTAL CALENDAR */
+
+let calendarMonth = new Date(
+  new Date().getFullYear(),
+  new Date().getMonth(),
+  1
+);
+
+let calendarUnavailable = [];
+let calendarStart = "";
+let calendarEnd = "";
+let calendarRequestNumber = 0;
+let calendarLoading = false;
+let calendarError = false;
+
+function calendarDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function calendarMonthString() {
+  return calendarDateString(calendarMonth).slice(0, 7);
+}
+
+function calendarDayType(dateString) {
+  const conflicts = calendarUnavailable.filter(item =>
+    dateString >= item.start && dateString <= item.end
+  );
+
+  if (conflicts.some(item => item.type === "booked")) {
+    return "booked";
+  }
+
+  if (conflicts.some(item => item.type === "blocked")) {
+    return "blocked";
+  }
+
+  return "available";
+}
+
+async function loadRentalCalendar() {
+  const area = document.getElementById("rentalCalendarArea");
+  if (!area || !selectedDress) return;
+
+  area.style.display = "block";
+
+  const requestNumber = ++calendarRequestNumber;
+  const dressName = selectedDress.name;
+  calendarLoading = true;
+  calendarError = false;
+  calendarUnavailable = [];
+  renderRentalCalendar();
+
+  try {
+    const inventoryResponse = await fetch(BACKEND_URL);
+    if (!inventoryResponse.ok) throw new Error("Inventory unavailable");
+
+    const inventory = await inventoryResponse.json();
+
+    if (!inventory.success || !Array.isArray(inventory.dresses)) {
+      throw new Error("Invalid inventory response");
+    }
+
+    const dress = inventory.dresses.find(item =>
+      item.name === dressName
+    );
+
+    if (!dress || !dress.dressId) {
+      throw new Error("Dress ID not found");
+    }
+
+    const url = new URL(BACKEND_URL);
+    url.searchParams.set("action", "calendar");
+    url.searchParams.set("dressId", dress.dressId);
+    url.searchParams.set("month", calendarMonthString());
+
+    const response = await fetch(url.toString());
+    if (!response.ok) throw new Error("Calendar unavailable");
+
+    const data = await response.json();
+
+    if (!data.success || !data.calendar ||
+        !Array.isArray(data.calendar.unavailableDates)) {
+      throw new Error(data.error || "Invalid calendar response");
+    }
+
+    if (requestNumber !== calendarRequestNumber ||
+        !selectedDress ||
+        selectedDress.name !== dressName) return;
+
+    calendarUnavailable = data.calendar.unavailableDates;
+    calendarLoading = false;
+    renderRentalCalendar();
+
+  } catch (error) {
+    if (requestNumber !== calendarRequestNumber) return;
+
+    calendarLoading = false;
+    calendarError = true;
+    calendarUnavailable = [];
+    renderRentalCalendar();
+    console.error("Rental calendar:", error);
+  }
+}
+
+function renderRentalCalendar() {
+  const area = document.getElementById("rentalCalendarArea");
+  if (!area) return;
+
+  const monthLabel = calendarMonth.toLocaleDateString("en-PH", {
+    month: "long",
+    year: "numeric"
+  });
+
+  const firstDay = new Date(
+    calendarMonth.getFullYear(),
+    calendarMonth.getMonth(),
+    1
+  );
+
+  const numberOfDays = new Date(
+    calendarMonth.getFullYear(),
+    calendarMonth.getMonth() + 1,
+    0
+  ).getDate();
+
+  const today = calendarDateString(new Date());
+
+  let daysHTML = "";
+
+  for (let i = 0; i < firstDay.getDay(); i++) {
+    daysHTML += "<span></span>";
+  }
+
+  for (let day = 1; day <= numberOfDays; day++) {
+    const dateString = calendarDateString(
+      new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day)
+    );
+
+    const type = calendarDayType(dateString);
+    const selected = calendarStart &&
+      dateString >= calendarStart &&
+      dateString <= (calendarEnd || calendarStart);
+
+    const disabled = calendarLoading ||
+      calendarError ||
+      dateString < today ||
+      type !== "available";
+
+    daysHTML += `
+      <button type="button"
+        class="calendar-day ${type} ${selected ? "selected" : ""}"
+        ${disabled ? "disabled" : ""}
+        onclick="selectCalendarDay('${dateString}')">
+        ${day}
+      </button>`;
+  }
+
+  area.innerHTML = `
+    <div class="rental-calendar">
+      <div class="calendar-heading">
+        <button type="button" class="calendar-nav"
+          onclick="changeCalendarMonth(-1)">‹</button>
+        <strong>${monthLabel}</strong>
+        <button type="button" class="calendar-nav"
+          onclick="changeCalendarMonth(1)">›</button>
+      </div>
+
+      <div class="calendar-weekdays">
+        <span>Sun</span><span>Mon</span><span>Tue</span>
+        <span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+
+      <div class="calendar-days">${daysHTML}</div>
+
+      <div class="calendar-legend">
+        <span><i class="calendar-dot" style="background:#edf5ee"></i>Available</span>
+        <span><i class="calendar-dot" style="background:#eab9ca"></i>Booked</span>
+        <span><i class="calendar-dot" style="background:#e4e1e3"></i>Blocked</span>
+        <span><i class="calendar-dot" style="background:#a87593"></i>Selected</span>
+      </div>
+
+      <p class="calendar-feedback">
+        ${calendarLoading ? "Loading availability from C-LHOUETTE Manager..." :
+          calendarError ? "Calendar unavailable. Please try another month or reopen this dress." :
+          calendarEnd ? `Selected: ${calendarStart} to ${calendarEnd}` :
+          calendarStart ? `Start: ${calendarStart}. Choose your return date.` :
+          "Choose your rental start date, then your return date. ♡"}
+      </p>
+    </div>`;
+}
+
+function changeCalendarMonth(direction) {
+  calendarMonth = new Date(
+    calendarMonth.getFullYear(),
+    calendarMonth.getMonth() + direction,
+    1
+  );
+
+  loadRentalCalendar();
+}
+
+function selectCalendarDay(dateString) {
+  if (calendarLoading || calendarError ||
+      calendarDayType(dateString) !== "available") return;
+
+  if (!calendarStart || calendarEnd || dateString < calendarStart) {
+    calendarStart = dateString;
+    calendarEnd = "";
+  } else {
+    const rangeHasConflict = calendarUnavailable.some(item =>
+      calendarStart <= item.end && dateString >= item.start
+    );
+
+    if (rangeHasConflict) {
+      alert("These dates include a booked or blocked day. Please choose another range. ♡");
+      return;
+    }
+
+    calendarEnd = dateString;
+  }
+
+  document.getElementById("formStartDate").value = calendarStart;
+  document.getElementById("formEndDate").value = calendarEnd;
+
+  availabilityCheckNumber++;
+  calculateRental();
+
+  if (calendarEnd) {
+    showRentalAvailability();
+  }
+
+  renderRentalCalendar();
+}
+
 /* =========================================================
    RESERVATION MODAL
    ========================================================= */
@@ -1114,8 +1463,25 @@ async function checkSelectedDressAvailability(startDate, endDate) {
   if(!selectedDress)return;
   document.getElementById("selectedTitle").textContent="Reserve / Inquire — "+selectedDress.name;
   document.getElementById("selectedDetails").textContent=`${selectedDress.style} • ${selectedDress.color || "Color not specified"} • ${selectedDress.occasion.join(" / ")} • ₱${selectedDress.budget.toLocaleString()} / event • Size ${selectedSize}`;
-  document.getElementById("formStartDate").value="";
-  document.getElementById("modal").classList.add("open");
+
+document.getElementById("formStartDate").value = "";
+document.getElementById("formEndDate").value = "";
+
+calendarStart = "";
+calendarEnd = "";
+
+calendarMonth = new Date(
+  new Date().getFullYear(),
+  new Date().getMonth(),
+  1
+);
+
+document.getElementById("rentalSummary").textContent =
+  "Select your rental dates to calculate the estimated rental cost.";
+
+document.getElementById("modal").classList.add("open");
+loadRentalCalendar();
+
 }
 function closeModal(){document.getElementById("modal").classList.remove("open")}
 async function submitInquiry(e){
@@ -1288,12 +1654,22 @@ async function showRentalAvailability() {
   }
 }
   document.getElementById("formStartDate").addEventListener("change", function() {
+    
+calendarStart = document.getElementById("formStartDate").value;
+calendarEnd = document.getElementById("formEndDate").value;
+renderRentalCalendar();
+
   availabilityCheckNumber++;
   calculateRental();
   showRentalAvailability();
 });
 
 document.getElementById("formEndDate").addEventListener("change", function() {
+  
+calendarStart = document.getElementById("formStartDate").value;
+calendarEnd = document.getElementById("formEndDate").value;
+renderRentalCalendar();
+
   availabilityCheckNumber++;
   calculateRental();
   showRentalAvailability();
