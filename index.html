@@ -820,7 +820,7 @@ function switchFitMethod(method) {
     );
   }
 
-  if (selectedSize || fitMatches !== null) {
+  if (selectedOccasion && (selectedSize || fitMatches !== null)) {
     document.getElementById("filterArea").style.display = "block";
     render();
   } else {
@@ -881,11 +881,12 @@ document.querySelectorAll(".size-btn").forEach(x =>
   x.classList.remove("active")
 );
 
-  if(!selectedOccasion){
-    message.textContent =
-      "Measurements checked! Choose your occasion to see your matching dresses in the catalog.";
-    return;
-  }
+if(!selectedOccasion){
+  fitMatches = null;
+  document.getElementById("filterArea").style.display = "none";
+  message.textContent = "Please choose an occasion first to find your matching dresses. ♡";
+  return;
+}
 
   document.getElementById("filterArea").style.display = "block";
   render();
@@ -1013,6 +1014,11 @@ function matches(d){
   return true;
 }
 function render(){
+  if(!selectedOccasion || (!selectedSize && fitMatches === null)){
+  document.getElementById("filterArea").style.display = "none";
+  document.getElementById("catalog").innerHTML = "";
+  return;
+}
   const list=dresses.filter(matches);
   const cat=document.getElementById("catalog");
   let summary = `Showing ${selectedOccasion} dresses`;
