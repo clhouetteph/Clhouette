@@ -383,7 +383,12 @@ rgba(250,247,244,0.85) 95%
 .clh-notice-email strong{color:#873d50}
 .clh-notice-note{font-size:13px;line-height:1.55;margin:18px 0 23px;color:#50484c}
 .clh-notice-ok{display:block;margin:auto;min-width:175px;border:0;border-radius:99px;padding:12px 30px;background:#d98699;color:#fff;font-weight:700;font-size:15px;transition:background .2s,transform .2s}
-.clh-notice-ok:hover{background:#c56f85;transform:translateY(-1px)}
+.clh-notice-ok:hover:not(:disabled){background:#c56f85;transform:translateY(-1px)}
+.clh-notice-ok:disabled{opacity:.65;cursor:wait;transform:none}
+.clh-notice-card{-webkit-backface-visibility:hidden;backface-visibility:hidden;will-change:transform,opacity}
+.clh-notice-overlay.is-sending .clh-notice-card{-webkit-animation:clh-fly-away .85s ease-in forwards;animation:clh-fly-away .85s ease-in forwards}
+.clh-notice-overlay.is-sending{-webkit-animation:clh-overlay-fade .9s ease forwards;animation:clh-overlay-fade .9s ease forwards}
+@-webkit-keyframes clh-fly-away{0%{opacity:1;-webkit-transform:translate3d(0,0,0) rotate(0) scale(1)}55%{opacity:.8;-webkit-transform:translate3d(12px,-28px,0) rotate(5deg) scale(.95)}100%{opacity:0;-webkit-transform:translate3d(70px,-170px,0) rotate(13deg) scale(.65)}}
 .clh-notice-overlay.is-sending .clh-notice-card{animation:clh-fly-away .72s cubic-bezier(.3,.1,.3,1) forwards}
 .clh-notice-overlay.is-sending{animation:clh-overlay-fade .8s ease forwards}
 @keyframes clh-fly-away{0%{opacity:1;transform:translateY(0) rotate(0) scale(1)}55%{opacity:.8;transform:translate(12px,-28px) rotate(5deg) scale(.95)}100%{opacity:0;transform:translate(70px,-170px) rotate(13deg) scale(.65)}}
@@ -404,7 +409,7 @@ rgba(250,247,244,0.85) 95%
       <div><strong>Please check your email inbox,</strong> including Spam/Junk, for updates and confirmation from C-LHOUETTE.</div>
     </div>
     <p class="clh-notice-note">Your dates are <strong>NOT YET RESERVED</strong> until our team reviews and approves your request.</p>
-    <button type="button" class="clh-notice-ok" id="clhNoticeOkay">OK</button>
+    <button type="button" class="clh-notice-ok" id="clhNoticeOkay" disabled aria-disabled="true">OK (3s)</button>
   </div>
 </div>
 
@@ -945,7 +950,7 @@ let dresses = [
 /* =========================================================
    RESERVATION SYSTEM
    ========================================================= */
-const RESERVATION_URL = "https://script.google.com/macros/s/AKfycbzE3i3KJI9BneKa1tklbuKULHbtxJoQrg2c5NffoIzw0wKDnWvDn9_iVuabGwx9FL56/exec";
+const RESERVATION_URL = "https://script.google.com/macros/s/AKfycbxqBxYmTb4hzTsRbWy5KBjUP_aW4aG_Lft1Gpf4nFABCqsDoSE5Tfejtuaad9k-qkIZ/exec";
 
 let selectedDress = null;
   const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzcDeU2xzI3OoEpEPlb5Q45TM9t8a_bRO-0rmoAGkkSMb-MfWncAs3p2hybb0biq8VM/exec";
@@ -2029,25 +2034,46 @@ function askStylist(){
 }
 
 
-// Custom popup: after OK, the card softly flies away.
+// Mobile-friendly custom popup with a three-second button countdown.
+let clhNoticeCountdownTimer = null;
+let clhNoticeCloseTimer = null;
 function showClhInquiryNotice(){
-  const overlay=document.getElementById('clhInquiryNotice');
-  const okay=document.getElementById('clhNoticeOkay');
-  overlay.classList.remove('is-sending');
-  overlay.classList.add('is-visible');
-  overlay.setAttribute('aria-hidden','false');
-  okay.focus();
+  const overlay = document.getElementById('clhInquiryNotice');
+  const okay = document.getElementById('clhNoticeOkay');
+  clearInterval(clhNoticeCountdownTimer);
+  clearTimeout(clhNoticeCloseTimer);
+  overlay.classList.remove('is-visible', 'is-sending');
+  okay.disabled = true;
+  okay.setAttribute('aria-disabled', 'true');
+  okay.textContent = 'OK (3s)';
+  overlay.setAttribute('aria-hidden', 'false');
+  // Two paint frames restart entrance transitions on mobile browsers.
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('is-visible')));
+  let remaining = 3;
+  clhNoticeCountdownTimer = setInterval(() => {
+    remaining -= 1;
+    if (remaining > 0) {
+      okay.textContent = `OK (${remaining}s)`;
+    } else {
+      clearInterval(clhNoticeCountdownTimer);
+      clhNoticeCountdownTimer = null;
+      okay.disabled = false;
+      okay.setAttribute('aria-disabled', 'false');
+      okay.textContent = 'OK';
+      okay.focus({preventScroll:true});
+    }
+  }, 1000);
 }
 (function(){
-  const overlay=document.getElementById('clhInquiryNotice');
-  const okay=document.getElementById('clhNoticeOkay');
-  okay.addEventListener('click',()=>{
-    if(overlay.classList.contains('is-sending'))return;
+  const overlay = document.getElementById('clhInquiryNotice');
+  const okay = document.getElementById('clhNoticeOkay');
+  okay.addEventListener('click', () => {
+    if (okay.disabled || overlay.classList.contains('is-sending')) return;
     overlay.classList.add('is-sending');
-    window.setTimeout(()=>{
-      overlay.classList.remove('is-visible','is-sending');
-      overlay.setAttribute('aria-hidden','true');
-    },800);
+    clhNoticeCloseTimer = setTimeout(() => {
+      overlay.classList.remove('is-visible', 'is-sending');
+      overlay.setAttribute('aria-hidden', 'true');
+    }, 950);
   });
 })();
 
