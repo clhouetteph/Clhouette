@@ -370,9 +370,44 @@ rgba(250,247,244,0.85) 95%
   line-height: 1.5;
 }
 
+
+/* C-LHOUETTE minimalist inquiry notice */
+.clh-notice-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(26,21,24,.56);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.clh-notice-overlay.is-visible{opacity:1;visibility:visible}
+.clh-notice-card{width:min(100%,430px);border-radius:28px;background:#fff7f7;padding:30px 26px 26px;box-shadow:0 18px 55px rgba(35,22,28,.22);color:#282125;text-align:left;transform:translateY(14px) scale(.97);transition:transform .3s ease,opacity .3s ease}
+.clh-notice-overlay.is-visible .clh-notice-card{transform:translateY(0) scale(1)}
+.clh-notice-title{font:500 clamp(28px,7vw,37px)/1.1 'Cormorant Garamond',Georgia,serif;text-align:center;margin:4px 0 23px;color:#2b2226}
+.clh-notice-message{font-size:14px;line-height:1.65;margin:0 0 17px}
+.clh-notice-email{display:flex;align-items:center;gap:13px;padding:17px 15px;border-radius:15px;background:#f8e9eb;font-size:14px;line-height:1.55}
+.clh-notice-email svg{flex:none;color:#bd7c8b}
+.clh-notice-email strong{color:#873d50}
+.clh-notice-note{font-size:13px;line-height:1.55;margin:18px 0 23px;color:#50484c}
+.clh-notice-ok{display:block;margin:auto;min-width:175px;border:0;border-radius:99px;padding:12px 30px;background:#d98699;color:#fff;font-weight:700;font-size:15px;transition:background .2s,transform .2s}
+.clh-notice-ok:hover{background:#c56f85;transform:translateY(-1px)}
+.clh-notice-overlay.is-sending .clh-notice-card{animation:clh-fly-away .72s cubic-bezier(.3,.1,.3,1) forwards}
+.clh-notice-overlay.is-sending{animation:clh-overlay-fade .8s ease forwards}
+@keyframes clh-fly-away{0%{opacity:1;transform:translateY(0) rotate(0) scale(1)}55%{opacity:.8;transform:translate(12px,-28px) rotate(5deg) scale(.95)}100%{opacity:0;transform:translate(70px,-170px) rotate(13deg) scale(.65)}}
+@keyframes clh-overlay-fade{0%,55%{opacity:1}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.clh-notice-overlay,.clh-notice-card{transition:none!important}.clh-notice-overlay.is-sending .clh-notice-card,.clh-notice-overlay.is-sending{animation:none!important}}
+
 </style>
 </head>
 <body>
+
+<!-- Custom site-controlled confirmation (replaces unstyleable browser alert) -->
+<div id="clhInquiryNotice" class="clh-notice-overlay" role="presentation" aria-hidden="true">
+  <div class="clh-notice-card" role="dialog" aria-modal="true" aria-labelledby="clhNoticeTitle" aria-describedby="clhNoticeMessage">
+    <h2 id="clhNoticeTitle" class="clh-notice-title">Reservation Inquiry Sent!</h2>
+    <p id="clhNoticeMessage" class="clh-notice-message">Thank you for choosing C-LHOUETTE! Your reservation inquiry has been submitted.</p>
+    <div class="clh-notice-email">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
+      <div><strong>Please check your email inbox,</strong> including Spam/Junk, for updates and confirmation from C-LHOUETTE.</div>
+    </div>
+    <p class="clh-notice-note">Your dates are <strong>NOT YET RESERVED</strong> until our team reviews and approves your request.</p>
+    <button type="button" class="clh-notice-ok" id="clhNoticeOkay">OK</button>
+  </div>
+</div>
+
 
 <header>
   <div class="logo">C-LHOUETTE</div>
@@ -1781,12 +1816,7 @@ btn.textContent = "Sending reservation... Please wait";
       body:params
     });
 
-    alert(
-  "Reservation Inquiry Sent!\n\n" +
-  "Thank you for choosing C-LHOUETTE! Your reservation inquiry has been submitted.\n\n" +
-  "Please check your email inbox, including Spam/Junk, for updates and confirmation from C-LHOUETTE.\n\n" +
-  "Your reservation is NOT YET CONFIRMED until our team reviews and approves your request."
-);
+    showClhInquiryNotice();
     document.getElementById("reservationForm").reset();
     document.getElementById("rentalSummary").textContent =
       "Select your rental dates to calculate the estimated rental cost.";
@@ -1997,6 +2027,29 @@ function askStylist(){
   input.value="";
   setTimeout(()=>addChat(recommend(text),"bot"),250);
 }
+
+
+// Custom popup: after OK, the card softly flies away.
+function showClhInquiryNotice(){
+  const overlay=document.getElementById('clhInquiryNotice');
+  const okay=document.getElementById('clhNoticeOkay');
+  overlay.classList.remove('is-sending');
+  overlay.classList.add('is-visible');
+  overlay.setAttribute('aria-hidden','false');
+  okay.focus();
+}
+(function(){
+  const overlay=document.getElementById('clhInquiryNotice');
+  const okay=document.getElementById('clhNoticeOkay');
+  okay.addEventListener('click',()=>{
+    if(overlay.classList.contains('is-sending'))return;
+    overlay.classList.add('is-sending');
+    window.setTimeout(()=>{
+      overlay.classList.remove('is-visible','is-sending');
+      overlay.setAttribute('aria-hidden','true');
+    },800);
+  });
+})();
 
 init();
 
