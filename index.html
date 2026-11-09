@@ -93,6 +93,10 @@ header{padding:22px 5%;display:flex;justify-content:space-between;align-items:ce
 .name{font-size:20px;font-weight:900}
 .meta{color:var(--muted);font-size:13px;line-height:1.5;margin:7px 0 12px}
 .measurement-detail{margin-top:7px;line-height:1.65}
+.measurement-prompt{margin-top:7px;font-size:12px;line-height:1.5;color:#865a70}
+.modal-measurements{margin:12px 0 18px;padding:14px 16px;border:1px solid #ead9df;border-radius:14px;background:#fcf7f9;line-height:1.7}
+.modal-measurements:empty{display:none}
+.modal-measurements .measurement-detail{margin:0}
 .catalog-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:16px 0}
 .catalog-tools input{flex:1;min-width:200px;border:1px solid var(--line);border-radius:12px;padding:13px}
 .catalog-tools button{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
@@ -179,7 +183,7 @@ rgba(250,247,244,0.85) 95%
 
 .policy-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0,1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   margin: 20px 0 26px;
 }
@@ -395,6 +399,21 @@ rgba(250,247,244,0.85) 95%
 @keyframes clh-overlay-fade{0%,55%{opacity:1}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.clh-notice-overlay,.clh-notice-card{transition:none!important}.clh-notice-overlay.is-sending .clh-notice-card,.clh-notice-overlay.is-sending{animation:none!important}}
 
+
+/* Rental policies: one full-width box per row, desktop and mobile */
+.rental-guide .policy-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.rental-guide .policy-card{min-width:0;width:100%}
+.clh-policy-details{margin-top:14px;border-top:1px solid #eadde2;padding-top:12px}
+.clh-policy-details summary{cursor:pointer;font-size:13px;font-weight:800;color:#873d50;line-height:1.5}
+.clh-policy-details[open] summary{margin-bottom:12px}
+.clh-table-note{margin:0 0 12px!important;line-height:1.65!important}
+.clh-table-scroll{overflow-x:auto;max-width:100%;border:1px solid #eadde2;border-radius:12px;background:white;-webkit-overflow-scrolling:touch}
+.clh-policy-table{border-collapse:collapse;width:100%;min-width:690px;font-size:12px;text-align:left}
+.clh-policy-table th,.clh-policy-table td{padding:11px 12px;border-bottom:1px solid #eee3e7;vertical-align:top;line-height:1.5}
+.clh-policy-table th{background:#f5e8ed;color:#49333e;font-weight:800;white-space:nowrap}
+.clh-policy-table tbody tr:last-child td{border-bottom:0}
+.clh-policy-table tbody tr:nth-child(even){background:#fff9fb}
+
 </style>
 </head>
 <body>
@@ -432,132 +451,37 @@ rgba(250,247,244,0.85) 95%
 
 <!-- =========================================
      C-LHOUETTE POLICY & FAQ — EASY EDIT AREA
-     Edit wording, amounts, or questions below.
      ========================================= -->
-
 <section class="rental-guide" id="rentalPolicy">
-  <div class="rental-guide-inner">
-
-    <p class="eyebrow">PLEASE READ BEFORE RENTING</p>
-    <h2>Before You Rent </h2>
-    <p class="helper">
-      A few things to know before reserving your
-      C-LHOUETTE look.
-    </p>
-
-    <!-- RENTAL & SECURITY POLICIES -->
-    <!-- Copy a policy-card block to add another policy. -->
-
-    <div class="policy-grid">
-
-      <div class="policy-card">
-        <h3> Valid ID Required</h3>
-        <p>
-          A valid government-issued ID is required
-          privately after reservation approval and
-          before dress release.
-        </p>
-      </div>
-
-      <div class="policy-card">
-        <h3> ₱1,000 Security Deposit</h3>
-        <p>
-          Required before dress release. Refunded
-          immediately after return inspection,
-          less any applicable charges.
-        </p>
-      </div>
-
-      <div class="policy-card">
-        <h3> Late Returns</h3>
-        <p>
-          An additional ₱200 is charged for each
-          day past the agreed return date.
-        </p>
-      </div>
-
-      <div class="policy-card">
-        <h3> Dress Care & Damages</h3>
-        <p>
-          Return dresses in good condition.
-          Alterations are not allowed.
-          Damage charges may apply.
-          Please check dress measurements carefully.
-        </p>
-      </div>
-
-      <div class="policy-card wide">
-        <h3> Payment & Shipping</h3>
-        <p>
-          After submitting an inquiry, contact our
-          official page to coordinate payment and
-          delivery. Customers shoulder applicable
-          delivery and return shipping fees.
-        </p>
-      </div>
-
-    </div>
-
-    <!-- FREQUENTLY ASKED QUESTIONS -->
-    <!-- Copy one details block to add a new FAQ. -->
-
-    <h2 style="font-size:23px">
-      Frequently Asked Questions
-    </h2>
-    <p class="helper">
-      Tap a question to see the answer.
-    </p>
-
-    <details class="policy-faq">
-      <summary>
-        Is my reservation confirmed immediately?
-      </summary>
-      <p>
-        No. Reservations are confirmed only after
-        approval and payment verification.
-      </p>
+ <div class="rental-guide-inner">
+  <p class="eyebrow">PLEASE READ BEFORE RENTING</p>
+  <h2>Before You Rent</h2>
+  <p class="helper">A few things to know before reserving your C-LHOUETTE look.</p>
+  <div class="policy-grid">
+   <div class="policy-card"><h3>Valid ID Required</h3><p>A valid government-issued ID is required privately after reservation approval and before dress release.</p></div>
+   <div class="policy-card"><h3>₱1,000 Security Deposit</h3><p>A refundable ₱1,000 security deposit is required before dress release. The dress is inspected within 24 hours of its return, and the remaining deposit is refunded after inspection, less applicable damage or late-return charges.</p></div>
+   <div class="policy-card"><h3>Late Returns</h3><p>An additional ₱200 is charged for each day past the agreed return date.</p></div>
+   <div class="policy-card"><h3>Dress Care &amp; Damages</h3><p>Return dresses in good condition. Alterations are not allowed. Please check dress measurements carefully. The following fees may apply based on the dress's condition after return.</p>
+    <details class="clh-policy-details"><summary>View damage fees and penalties</summary>
+     <p class="clh-table-note">Fees depend on the actual damage and required cleaning or repair. Irreversible damage and lost garments may be charged at their stated value.</p>
+     <div class="clh-table-scroll" tabindex="0" role="region" aria-label="Damage Type table"><table class="clh-policy-table"><thead><tr><th scope="col">Damage Type</th><th scope="col">Description</th><th scope="col">Fee Structure / Standard Penalty</th></tr></thead><tbody><tr><td>Minor Stains</td><td>Light makeup, food/beverage splashes, sweat marks, or dirt removed with standard dry cleaning</td><td>₱50–₱100 (or covered by standard cleaning fee)</td></tr><tr><td>Major / Stubborn Stains</td><td>Red wine, permanent ink, oil/grease, or severe mud requiring special spot treatment</td><td>₱150–₱300</td></tr><tr><td>Minor Seam / Stitch Repairs</td><td>Loose threads, slight seam popping, detached hook-and-eye, or loose buttons/zippers</td><td>₱50–₱150</td></tr><tr><td>Major Fabric Tears / Snags</td><td>Ripped lining, broken zipper replacement, or medium snags that can still be tailored</td><td>₱150–₱300</td></tr><tr><td>Irreversible Damage</td><td>Burn marks, large tears, melted synthetic fabric, or unremovable dye bleeding</td><td>Full replacement value (₱2,000–₱4,000)</td></tr><tr><td>Late Return Penalty</td><td>Failure to return by the agreed return date</td><td>₱200 per day</td></tr><tr><td>Lost / Non-Return</td><td>Total loss or missing garment</td><td>Full garment value + lost rental revenue</td></tr></tbody></table></div>
     </details>
-
-    <details class="policy-faq">
-      <summary>
-        When will my security deposit be refunded?
-      </summary>
-      <p>
-        Immediately after the returned dress passes
-        inspection, less any applicable deductions.
-      </p>
+   </div>
+   <div class="policy-card"><h3>Payment &amp; Shipping</h3><p>After submitting a reservation inquiry, you will receive an email with your inquiry details, payment instructions, and available payment options. Please check your inbox or Spam/Junk folder. Customers are responsible for delivery and return shipping fees, paid directly to the courier. Actual shipping costs may be higher or lower than the estimated rates shown below.</p>
+    <details class="clh-policy-details"><summary>View estimated motorcycle shipping fees by area</summary>
+     <p class="clh-table-note"><strong>Important:</strong> These are estimates only, not guaranteed courier quotes. Actual shipping fees and travel times may be <strong>higher or lower</strong> depending on the exact pickup/drop-off address, traffic, demand, weather, and courier rates. Rates shown are estimated for one trip; delivery and return may be charged separately.</p>
+     <div class="clh-table-scroll" tabindex="0" role="region" aria-label="Destination City / Area table"><table class="clh-policy-table"><thead><tr><th scope="col">Destination City / Area</th><th scope="col">Specific Key Districts</th><th scope="col">Distance</th><th scope="col">Motorcycle Rate</th><th scope="col">Est. Time</th></tr></thead><tbody><tr><td>Caloocan</td><td>Monumento, Sangandaan, Bagong Barrio, Camarin, Deparo</td><td>3–10 km</td><td>₱60–₱110</td><td>20–35 mins</td></tr><tr><td>Malabon</td><td>Potrero, Dampalit, Tonsuya, Acacia, Longos</td><td>3–8 km</td><td>₱60–₱95</td><td>15–30 mins</td></tr><tr><td>Navotas</td><td>San Jose, Tangos, Bagumbayan, North Bay Boulevard</td><td>5–12 km</td><td>₱70–₱120</td><td>25–40 mins</td></tr><tr><td>Quezon City (North/West)</td><td>Novaliches, Fairview, Project 8, Balintawak, Cubao, Diliman</td><td>5–15 km</td><td>₱80–₱160</td><td>25–50 mins</td></tr><tr><td>Manila</td><td>Sampaloc, Binondo, Sta. Cruz, Quiapo, Ermita, Malate, Tondo</td><td>12–18 km</td><td>₱150–₱200</td><td>45–65 mins</td></tr><tr><td>San Juan</td><td>Greenhills, Addition Hills, Little Baguio</td><td>14–18 km</td><td>₱160–₱210</td><td>45–60 mins</td></tr><tr><td>Mandaluyong</td><td>Highway Hills, Wack-Wack, Plainview, Boni Avenue</td><td>16–20 km</td><td>₱170–₱220</td><td>50–70 mins</td></tr><tr><td>Pasig</td><td>Ortigas Center, Kapitolyo, Rosario, Maybunga</td><td>18–22 km</td><td>₱180–₱230</td><td>50–75 mins</td></tr><tr><td>Quezon City (South/East)</td><td>Libis / Eastwood, New Manila, Galas, Roxas District</td><td>14–20 km</td><td>₱150–₱210</td><td>40–65 mins</td></tr><tr><td>Marikina</td><td>Barangka, Concepcion, Industrial Valley, Shoe Avenue</td><td>18–24 km</td><td>₱180–₱240</td><td>55–80 mins</td></tr><tr><td>Makati</td><td>Poblacion, Legazpi Village, Salcedo Village, Magallanes</td><td>22–28 km</td><td>₱230–₱300</td><td>60–90 mins</td></tr><tr><td>Taguig</td><td>Bonifacio Global City (BGC), McKinley Hill, Bicutan</td><td>24–32 km</td><td>₱250–₱330</td><td>65–100 mins</td></tr><tr><td>Pasay</td><td>Roxas Boulevard, MOA Complex, Newport / Airport Area</td><td>22–28 km</td><td>₱230–₱310</td><td>60–90 mins</td></tr><tr><td>Parañaque</td><td>BF Homes, Sucat, Better Living, Baclaran</td><td>28–35 km</td><td>₱290–₱360</td><td>75–110 mins</td></tr><tr><td>Muntinlupa</td><td>Alabang, Tunasan, Putatan, Ayala Alabang</td><td>32–40 km</td><td>₱320–₱400</td><td>80–120 mins</td></tr><tr><td>Las Piñas</td><td>Talon, Almanza, Zapote, Pamplona</td><td>30–38 km</td><td>₱300–₱380</td><td>80–120 mins</td></tr><tr><td>Pateros</td><td>Poblacion, Aguho</td><td>24–28 km</td><td>₱240–₱300</td><td>65–90 mins</td></tr></tbody></table></div>
     </details>
-
-    <details class="policy-faq">
-      <summary>
-        What happens if I damage the dress?
-      </summary>
-      <p>
-        Charges may apply for damage beyond normal
-        wear. Specific damage fees will be provided
-        before rental confirmation.
-      </p>
-    </details>
-
-    <details class="policy-faq">
-      <summary>
-        How is my valid ID protected?
-      </summary>
-      <p>
-        IDs are collected privately and stored
-        with restricted staff access. They are
-        deleted within 7 days after rental
-        completion and resolution of outstanding
-        issues, unless longer retention is required
-        by law.
-      </p>
-    </details>
-
-    <!-- ADD MORE FAQS ABOVE THIS LINE -->
-
+   </div>
   </div>
+  <h2 style="font-size:23px">Frequently Asked Questions</h2>
+  <p class="helper">Tap a question to see the answer.</p>
+  <details class="policy-faq"><summary>Is my reservation confirmed immediately?</summary><p>No. Reservations are confirmed only after approval and payment verification.</p></details>
+  <details class="policy-faq"><summary>When will my security deposit be refunded?</summary><p>Once C-LHOUETTE receives the returned dress, our team will inspect its condition within 24 hours. Any applicable damage or late-return charges will be deducted from the ₱1,000 refundable security deposit. The remaining balance will be refunded after inspection.</p></details>
+  <details class="policy-faq"><summary>What happens if I damage the dress?</summary><p>Applicable fees depend on the type and severity of damage. Please see the detailed damage and penalty breakdown in the Dress Care &amp; Damages section above.</p></details>
+  <details class="policy-faq"><summary>How is my valid ID protected?</summary><p>IDs are collected privately and stored with restricted staff access. They are deleted within 7 days after rental completion and resolution of outstanding issues, unless longer retention is required by law.</p></details>
+ </div>
 </section>
-
 <!-- END OF POLICY & FAQ SECTION -->
 
 <main class="wrap"> 
@@ -711,6 +635,7 @@ rgba(250,247,244,0.85) 95%
     <h2 id="selectedTitle">Reservation request</h2>
    
 <p class="note" id="selectedDetails"></p>
+<div id="selectedMeasurements" class="modal-measurements" aria-live="polite"></div>
 
 <!-- C-LHOUETTE RENTAL CALENDAR -->
 <div id="rentalCalendarArea" style="display:none;"></div>
@@ -740,15 +665,68 @@ rgba(250,247,244,0.85) 95%
   </div>
 
   <div class="form-row">
-    <label>Delivery location</label>
+    <label for="deliveryArea">Nearest Delivery City / Area</label>
+    <select id="deliveryArea" required onchange="calculateRental()" style="width:100%;padding:13px;border:1px solid #e5d8dc;border-radius:12px;background:#faf7f8;color:#292329;">
+      <option value="">Select nearest delivery area</option>
+      <option value="Caloocan">Caloocan</option>
+      <option value="Malabon">Malabon</option>
+      <option value="Navotas">Navotas</option>
+      <option value="Quezon City (North/West)">Quezon City (North/West)</option>
+      <option value="Manila">Manila</option>
+      <option value="San Juan">San Juan</option>
+      <option value="Mandaluyong">Mandaluyong</option>
+      <option value="Pasig">Pasig</option>
+      <option value="Quezon City (South/East)">Quezon City (South/East)</option>
+      <option value="Marikina">Marikina</option>
+      <option value="Makati">Makati</option>
+      <option value="Taguig">Taguig</option>
+      <option value="Pasay">Pasay</option>
+      <option value="Parañaque">Parañaque</option>
+      <option value="Muntinlupa">Muntinlupa</option>
+      <option value="Las Piñas">Las Piñas</option>
+      <option value="Pateros">Pateros</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="deliveryLocation" style="font-weight:400;">Exact Delivery Location</label>
     <textarea id="deliveryLocation" required
-      placeholder="Where should we deliver the dress?"></textarea>
+      placeholder="House/building, street, barangay, landmark and city"></textarea>
+  </div>
+
+  <div class="form-row" style="margin:12px 0;">
+    <label for="sameReturnAsDelivery" style="display:flex;align-items:center;gap:9px;font-weight:400;cursor:pointer;">
+      <input type="checkbox" id="sameReturnAsDelivery" style="width:auto;margin:0;flex-shrink:0;">
+      Same as delivery location (copy to return / pickup)
+    </label>
   </div>
 
   <div class="form-row">
-    <label>Return / pickup location</label>
+    <label for="returnArea">Nearest Return / Pickup City / Area</label>
+    <select id="returnArea" required onchange="calculateRental()" style="width:100%;padding:13px;border:1px solid #e5d8dc;border-radius:12px;background:#faf7f8;color:#292329;">
+      <option value="">Select nearest return area</option>
+      <option value="Caloocan">Caloocan</option>
+      <option value="Malabon">Malabon</option>
+      <option value="Navotas">Navotas</option>
+      <option value="Quezon City (North/West)">Quezon City (North/West)</option>
+      <option value="Manila">Manila</option>
+      <option value="San Juan">San Juan</option>
+      <option value="Mandaluyong">Mandaluyong</option>
+      <option value="Pasig">Pasig</option>
+      <option value="Quezon City (South/East)">Quezon City (South/East)</option>
+      <option value="Marikina">Marikina</option>
+      <option value="Makati">Makati</option>
+      <option value="Taguig">Taguig</option>
+      <option value="Pasay">Pasay</option>
+      <option value="Parañaque">Parañaque</option>
+      <option value="Muntinlupa">Muntinlupa</option>
+      <option value="Las Piñas">Las Piñas</option>
+      <option value="Pateros">Pateros</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="returnLocation" style="font-weight:400;">Exact Return / Pickup Location</label>
     <textarea id="returnLocation" required
-      placeholder="Where should the dress be returned or picked up?"></textarea>
+      placeholder="House/building, street, barangay, landmark and city"></textarea>
   </div>
 
   <div id="rentalSummary" class="note" style="margin:12px 0;">
@@ -773,6 +751,20 @@ rgba(250,247,244,0.85) 95%
 <footer>C-LHOUETTE • Occasion Wear Rental • Find the look. Rent the moment.</footer>
 
 <script>
+/* ================================================
+   SHIPPING ESTIMATES — EASY EDIT
+   Per-trip motorcycle ranges, PHP.
+   Keep in sync with Reservation Apps Script.
+   ================================================ */
+const CLH_SECURITY_DEPOSIT = 1000;
+const CLH_SHIPPING_RATES = {"Caloocan": [60, 110], "Malabon": [60, 95], "Navotas": [70, 120], "Quezon City (North/West)": [80, 160], "Manila": [150, 200], "San Juan": [160, 210], "Mandaluyong": [170, 220], "Pasig": [180, 230], "Quezon City (South/East)": [150, 210], "Marikina": [180, 240], "Makati": [230, 300], "Taguig": [250, 330], "Pasay": [230, 310], "Parañaque": [290, 360], "Muntinlupa": [320, 400], "Las Piñas": [300, 380], "Pateros": [240, 300]};
+function clhShippingRange(){
+  const delivery = CLH_SHIPPING_RATES[document.getElementById("deliveryArea").value];
+  const returning = CLH_SHIPPING_RATES[document.getElementById("returnArea").value];
+  return delivery && returning ? [delivery[0]+returning[0],delivery[1]+returning[1]] : null;
+}
+function clhMoney(amount){ return "₱"+Number(amount).toLocaleString("en-PH"); }
+
 /* =========================================================
    EASY EDIT AREA
    ---------------------------------------------------------
@@ -1328,8 +1320,7 @@ function dressCardHTML(d, showFit){
         Color: ${escapeDressText(d.color||"Not specified")}<br>
         Available in: ${escapeDressText((d.size||[]).join(", "))} • ${canReserve?"Available":"Coming soon"}
         ${normalizeDressLength(d.dressLength)?`<br>Length: ${escapeDressText(normalizeDressLength(d.dressLength))}`:""}
-        ${dressMeasurementsHTML(d)}
-        ${d.fitNotes?`<div class="measurement-detail"><strong>Fit notes:</strong> ${escapeDressText(d.fitNotes)}</div>`:""}
+        ${(dressMeasurementsHTML(d) || d.fitNotes)?`<div class="measurement-prompt"><strong>Measurements:</strong> Click Reserve / Inquire to see specific measurements.</div>`:""}
       </div>
       ${fitInfo?`<div class="meta">Estimated fit: ${fitInfo.filter(m=>!selectedSize||m.size===selectedSize).map(m=>`${escapeDressText(m.size)} (${m.score}/3)`).join(", ")}<br>Fit estimates are not guaranteed.</div>`:""}
       <div class="price">₱${Number(d.budget).toLocaleString()} / 3-day package</div>
@@ -1702,6 +1693,10 @@ async function checkSelectedDressAvailability(startDate, endDate) {
   if(!selectedDress || selectedDress.availability!=="available")return;
   document.getElementById("selectedTitle").textContent="Reserve / Inquire — "+selectedDress.name;
   document.getElementById("selectedDetails").textContent=`${selectedDress.style} • ${selectedDress.color || "Color not specified"} • ${selectedDress.occasion.join(" / ")} • ₱${selectedDress.budget.toLocaleString()} / 3-day package • Size ${selectedSize}`;
+  const measurementsPanel=document.getElementById("selectedMeasurements");
+  const measurementContent=dressMeasurementsHTML(selectedDress);
+  const fitNotesContent=selectedDress.fitNotes?`<div class="measurement-detail"><strong>Fit notes:</strong> ${escapeDressText(selectedDress.fitNotes)}</div>`:"";
+  measurementsPanel.innerHTML=measurementContent+fitNotesContent || "<strong>Measurements:</strong> Please contact us for specific measurements.";
 
 document.getElementById("formStartDate").value = "";
 document.getElementById("formEndDate").value = "";
@@ -1759,10 +1754,8 @@ async function submitInquiry(e){
 const estimatedTotal = dailyRate;
 
 
-  // Show the calculation
-  document.getElementById("rentalSummary").innerHTML =
-    "<strong>Rental summary</strong><br>" +
-    "3-day rental package = <strong>₱" + estimatedTotal.toLocaleString() + "</strong>";
+  // Keep the original Rental Summary; update its automatic lines.
+  calculateRental();
 
   const params = new URLSearchParams({
     customerName: document.getElementById("customerName").value,
@@ -1781,6 +1774,8 @@ const estimatedTotal = dailyRate;
     dailyRate: dailyRate,
     estimatedTotal: estimatedTotal,
 
+    deliveryArea: document.getElementById("deliveryArea").value,
+    returnArea: document.getElementById("returnArea").value,
     deliveryLocation: deliveryLocation,
     returnLocation: returnLocation,
 
@@ -1931,13 +1926,26 @@ function calculateRental() {
 
   const packagePrice = Number(selectedDress.budget);
 
+  const shipping = clhShippingRange();
+  const availabilityText = document.getElementById("availabilityMessage");
+  const availabilitySnapshot = availabilityText ? {text:availabilityText.textContent,color:availabilityText.style.color} : null;
   summary.innerHTML =
     "<strong>Rental summary</strong><br>" +
     "Rental period: " + startDate + " to " + endDate +
     "<br>Duration: 3 days" +
-    "<br><strong>Total rental price: ₱" +
-    packagePrice.toLocaleString() +
-    "</strong>";
+    "<br>Total rental price: " + clhMoney(packagePrice) +
+    "<br>Refundable security deposit: " + clhMoney(CLH_SECURITY_DEPOSIT) +
+    "<br><strong>Amount payable to C-LHOUETTE: " + clhMoney(packagePrice+CLH_SECURITY_DEPOSIT) + "</strong>" +
+    "<br>Prepare estimated shipping fee (Delivery &amp; Return): " +
+    (shipping ? clhMoney(shipping[0])+"–"+clhMoney(shipping[1]) : "Select delivery and return areas") +
+    "<br><small>Pay shipping directly to the courier. Actual fees may be higher or lower.</small>";
+  if (availabilitySnapshot) {
+    const msg = document.createElement("p");
+    msg.id = "availabilityMessage";
+    msg.textContent = availabilitySnapshot.text;
+    msg.style.color = availabilitySnapshot.color;
+    summary.appendChild(msg);
+  }
 }
 
 window.addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal()});
@@ -2088,5 +2096,48 @@ setInterval(()=>{
 },10000);
 
 </script>
+
+<script>
+/* Copy the delivery area and exact address to return/pickup when requested. */
+(function () {
+  const deliveryArea = document.getElementById("deliveryArea");
+  const deliveryLocation = document.getElementById("deliveryLocation");
+  const returnArea = document.getElementById("returnArea");
+  const returnLocation = document.getElementById("returnLocation");
+  const checkbox = document.getElementById("sameReturnAsDelivery");
+  const form = document.getElementById("reservationForm");
+  if (!deliveryArea || !deliveryLocation || !returnArea || !returnLocation || !checkbox) return;
+
+  function syncReturn() {
+    if (!checkbox.checked) return;
+    returnArea.value = deliveryArea.value;
+    returnLocation.value = deliveryLocation.value;
+    if (typeof calculateRental === "function") calculateRental();
+  }
+  function toggleCopy() {
+    syncReturn();
+    returnArea.disabled = checkbox.checked;
+    returnLocation.readOnly = checkbox.checked;
+    returnLocation.style.background = checkbox.checked ? "#faf7f8" : "";
+  }
+
+  checkbox.addEventListener("change", toggleCopy);
+  deliveryArea.addEventListener("change", syncReturn);
+  deliveryLocation.addEventListener("input", syncReturn);
+  if (form) {
+    form.addEventListener("reset", function () {
+      setTimeout(function () {
+        returnArea.disabled = false;
+        returnLocation.readOnly = false;
+        returnLocation.style.background = "";
+      }, 0);
+    });
+  }
+
+  // Disabled fields are excluded from native form submission, but this
+  // website submits the values directly through JavaScript by element ID.
+})();
+</script>
+
 </body>
 </html>
