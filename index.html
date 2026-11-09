@@ -2117,19 +2117,22 @@ setInterval(()=>{
   function toggleCopy() {
     syncReturn();
     returnArea.disabled = checkbox.checked;
-    returnLocation.readOnly = checkbox.checked;
-    returnLocation.style.background = checkbox.checked ? "#faf7f8" : "";
+    returnLocation.disabled = checkbox.checked;
+    returnLocation.style.background = checkbox.checked ? "#f1edef" : "";
+    returnLocation.style.cursor = checkbox.checked ? "not-allowed" : "";
   }
 
   checkbox.addEventListener("change", toggleCopy);
+  toggleCopy();
   deliveryArea.addEventListener("change", syncReturn);
   deliveryLocation.addEventListener("input", syncReturn);
   if (form) {
     form.addEventListener("reset", function () {
       setTimeout(function () {
         returnArea.disabled = false;
-        returnLocation.readOnly = false;
+        returnLocation.disabled = false;
         returnLocation.style.background = "";
+        returnLocation.style.cursor = "";
       }, 0);
     });
   }
