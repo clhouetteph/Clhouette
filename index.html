@@ -432,6 +432,12 @@ rgba(250,247,244,0.85) 95%
 }
 #returnLocation:disabled::placeholder { color: #999 !important; }
 
+
+/* C-LHOUETTE announcement: normal document flow, not sticky */
+#clhAnnouncement{display:none;min-height:32px;padding:7px 36px;background:#ead9d7;color:#653a4b;text-align:center;font-size:12px;line-height:1.5;letter-spacing:.015em}
+#clhAnnouncement.is-active{display:block}
+#clhAnnouncementText{overflow-wrap:anywhere}
+
 </style>
 </head>
 <body>
@@ -450,6 +456,9 @@ rgba(250,247,244,0.85) 95%
   </div>
 </div>
 
+
+<!-- Google Sheets-managed announcement, intentionally above sticky header -->
+<div id="clhAnnouncement" role="status" aria-live="polite"><span id="clhAnnouncementText"></span></div>
 
 <header>
   <div class="logo">C-LHOUETTE</div>
@@ -2104,6 +2113,40 @@ function showClhInquiryNotice(){
 })();
 
 init();
+
+/* Announcement settings are read from the inventory backend.
+   Backend integration: add ?action=announcement to the inventory Code.gs
+   and return JSON such as:
+   {"success":true,"announcement":{"enabled":true,"message":"New arrivals! 🎀","backgroundColor":"#ead9d7","textColor":"#653a4b"}}
+   Until the backend supports this action, the bar remains hidden. */
+async function loadClhAnnouncement(){
+  const bar=document.getElementById('clhAnnouncement');
+  const label=document.getElementById('clhAnnouncementText');
+  try{
+    const url=new URL(BACKEND_URL);
+    url.searchParams.set('action','announcement');
+    const response=await fetch(url.toString(),{cache:'no-store'});
+    if(!response.ok) throw new Error('Announcement HTTP '+response.status);
+    const payload=await response.json();
+    const item=payload.announcement;
+    if(payload.success!==true || !item || item.enabled!==true || !String(item.message||'').trim()){
+      bar.classList.remove('is-active');
+      label.textContent='';
+      return;
+    }
+    const validHex=value=>/^#[0-9a-fA-F]{6}$/.test(String(value||''));
+    bar.style.backgroundColor=validHex(item.backgroundColor)?item.backgroundColor:'#ead9d7';
+    bar.style.color=validHex(item.textColor)?item.textColor:'#653a4b';
+    label.textContent=String(item.message).slice(0,500);
+    bar.classList.add('is-active');
+  }catch(error){
+    // Avoid showing an outdated or placeholder promotion on backend errors.
+    bar.classList.remove('is-active');
+    console.warn('Announcement unavailable:',error);
+  }
+}
+loadClhAnnouncement();
+
 
 // Poll the live calendar only while the reservation modal is open.
 // Bypass the old calendar cache so new Confirmed bookings appear without a page refresh.
